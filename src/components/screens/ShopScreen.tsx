@@ -46,6 +46,12 @@ export function ShopScreen({ save, onBuy, onGoToAcademy }: ShopScreenProps) {
             <div className="grid grid-cols-3 gap-3">
               {SHOP_ITEMS.filter((item) => item.category === category).map((item) => {
                 const owned = save.owned.includes(item.id)
+                const affordable = !owned && save.gold >= item.price!
+                const cardStyle = owned
+                  ? 'bg-white ring-2 ring-emerald-200'
+                  : affordable
+                    ? 'bg-white ring-2 ring-pink-300 active:scale-95'
+                    : 'bg-violet-50 active:scale-95'
                 return (
                   <button
                     key={item.id}
@@ -53,13 +59,11 @@ export function ShopScreen({ save, onBuy, onGoToAcademy }: ShopScreenProps) {
                     onClick={() => choose(item)}
                     disabled={owned}
                     aria-label={owned ? `${item.name}, už máš` : `${item.name}, cena ${formatGold(item.price!)}`}
-                    className={`flex flex-col items-center gap-1 rounded-2xl p-2 transition-transform ${
-                      owned ? 'bg-white ring-2 ring-emerald-200' : 'bg-violet-50 active:scale-95'
-                    }`}
+                    className={`flex flex-col items-center gap-1 rounded-2xl p-2 transition-transform ${cardStyle}`}
                   >
                     <ItemThumbnail
                       item={item}
-                      className={`aspect-square w-full ${owned ? '' : 'opacity-60 grayscale'}`}
+                      className={`aspect-square w-full ${owned || affordable ? '' : 'opacity-60 grayscale'}`}
                     />
                     <span className="text-xs leading-tight text-violet-700">{item.name}</span>
                     {owned ? (

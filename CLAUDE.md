@@ -54,7 +54,8 @@ vydělané řešením matematických příkladů.
 
 ### 2. Obchod
 - Ceny z items.json: doplňky 20–30, boty/vlasy 40, šaty 50–60 zlaťáků
-- Zamčené věci šedě s cenou
+- Zamčené věci šedě s cenou; kousky, na které už zlaťáky stačí, jsou barevné s růžovým rámečkem
+  (schváleno), koupené mají zelený rámeček a „Už máš“
 - Potvrzovací dialog před nákupem
 - V obchodě jen 12 kousků s cenou > 0 (startovní kousky a korunka tam nejsou) — rozhodnutí Clauda
 - Když zlaťáky nestačí: dialog s chybějící částkou a tlačítkem „Jít počítat“ do Akademie
