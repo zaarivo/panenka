@@ -29,6 +29,13 @@ vydělané řešením matematických příkladů.
 - Pořadí vrstev: pozadí → tělo → boty → šaty → vlasy → doplňky
 - Každá položka v `src/data/items.json`: `{ id, name, category, price, layer, asset }`
 - Komponenta vrstvy umí SVG i PNG (pro pozdější výměnu grafiky bez změny logiky)
+  - `asset` = klíč vestavěné SVG grafiky (`src/graphics/`), nebo cesta k obrázku v `public/`
+    končící `.png/.webp/.jpg` (např. `doll/dress-pink.png`). Obrázek musí mít plátno 300 × 600
+    s průhledným pozadím, aby lícoval s panenkou. Pozadí a tělo jdou vyměnit stejně (`BASE_ASSETS`).
+  - `resolveAsset()` v `src/graphics/index.ts` rozhoduje SVG vs. obrázek; `DollViewer` skládá vrstvy
+    podle `LAYER_ORDER`, `LayerAsset` vykreslí jednu vrstvu.
+  - Geometrie postavy: hlava střed (150,125), ramena y≈212, pas y≈300, ruce (83,356)/(217,356),
+    chodidla (131,547)/(169,547). Pravá strana se kreslí zrcadlením (`Mirrored`).
 - 4 kategorie × 4 kusy = 16 položek celkem
 - Na startu 1 kousek z každé kategorie zdarma (default outfit) — v items.json `price: 0`
 - Korunka je 17. položka s `price: null` a `unlockBadge` — nedá se koupit, odemyká ji odznak
