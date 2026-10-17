@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { buyItem, type BuyResult } from '../lib/economy'
+import { addGold, applyCorrectAnswer, applyWrongAnswer } from '../lib/academy'
+import { buyItem, rewardForCorrect, type BuyResult } from '../lib/economy'
+import type { Problem } from '../lib/mathGenerator'
 import { loadSave, writeSave } from '../lib/storage'
 import { toggleEquip } from '../lib/wardrobe'
-import type { SaveData } from '../types'
+import type { Level, SaveData } from '../types'
 
 export function useGameState() {
   const [save, setSave] = useState<SaveData>(() => loadSave())
@@ -22,5 +24,22 @@ export function useGameState() {
     [save],
   )
 
-  return { save, toggleItem, buy }
+  const answerCorrect = useCallback((problem: Problem, nextLevel: Level): number => {
+    setSave((current) => applyCorrectAnswer(current, problem, nextLevel).save)
+    return rewardForCorrect(problem.level)
+  }, [])
+
+  const answerWrong = useCallback(
+    (problem: Problem, nextLevel: Level) => setSave((current) => applyWrongAnswer(current, problem, nextLevel)),
+    [],
+  )
+
+  const receiveGold = useCallback((amount: number) => setSave((current) => addGold(current, amount)), [])
+
+  const setSoundOn = useCallback(
+    (soundOn: boolean) => setSave((current) => ({ ...current, settings: { ...current.settings, soundOn } })),
+    [],
+  )
+
+  return { save, toggleItem, buy, answerCorrect, answerWrong, receiveGold, setSoundOn }
 }

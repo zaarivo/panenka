@@ -2,6 +2,36 @@
 
 @theme {
   --animate-pop: pop 180ms ease-out;
+  --animate-float-up: float-up 1100ms ease-out forwards;
+  --animate-wiggle: wiggle 700ms ease-in-out infinite;
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(0) scale(0.8);
+    opacity: 0;
+  }
+  20% {
+    transform: translateY(-8px) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-48px) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
 }
 
 @keyframes pop {

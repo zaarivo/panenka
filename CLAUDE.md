@@ -73,6 +73,17 @@ vydělané řešením matematických příkladů.
 - Vlastní velká číselná klávesnice (ne systémová)
 - Po 5 správných v řadě: bonusová truhla, náhodná odměna 20–40 zlaťáků
 
+#### Průběh v Akademii (rozhodnutí Clauda)
+- Kola po 10 vyřešených příkladech (`ROUND_SIZE`), pak shrnutí „Kolo hotové!“ s vydělanými
+  zlaťáky a volbou „Ještě kolo“ / „Do obchodu“ — podporuje krátké hraní bez časomíry.
+- Po správné odpovědi pochvala + „+10“ vyletí nad počítadlo, zvuk mince; další příklad sám po 1,2 s.
+- Po chybě se ukáže nápověda a zůstává vidět až do vyřešení; zadání zůstává stejné.
+- 5 hvězdiček ukazuje řadu správných odpovědí; při páté se otevře truhla (klepnutím).
+- Porovnávání se odpovídá třemi velkými tlačítky `<` `=` `>`, ostatní typy vlastní klávesnicí (max 3 číslice).
+- Přepínač zvuku je v hlavičce Akademie (`settings.soundOn`). Zvuky: `lib/sound.ts` (Web Audio).
+- Akademie zůstává v DOM i při jiné záložce, aby se rozdělané kolo neztratilo.
+- Řady (správně/chyby) se drží jen v rámci sezení; stupeň a statistiky se ukládají.
+
 #### Stupně obtížnosti (schváleno)
 | Stupeň | Sčítání/odčítání, chybějící číslo, porovnávání | Násobilka (řady) |
 |---|---|---|

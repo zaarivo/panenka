@@ -55,6 +55,33 @@ export function TrophyIcon(props: IconProps) {
   )
 }
 
+export function BackspaceIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7 6-7z" />
+      <path d="M12 9l5 6M17 9l-5 6" />
+    </Icon>
+  )
+}
+
+export function SoundOnIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 9h4l5-4v14l-5-4H4z" />
+      <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" />
+    </Icon>
+  )
+}
+
+export function SoundOffIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 9h4l5-4v14l-5-4H4z" />
+      <path d="M17 9.5l5 5M22 9.5l-5 5" />
+    </Icon>
+  )
+}
+
 export function CameraIcon(props: IconProps) {
   return (
     <Icon {...props}>
