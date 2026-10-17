@@ -1,0 +1,51 @@
+import { describe, expect, test } from 'vitest'
+import { ITEMS, STARTER_ITEMS } from '../data/items'
+import { BADGE_IDS, CATEGORIES, LAYER_ORDER } from '../types'
+
+const PRICE_RANGES = {
+  accessory: [20, 30],
+  shoes: [40, 40],
+  hair: [40, 40],
+  dress: [50, 60],
+} as const
+
+describe('katalog oblečení', () => {
+  test('id jsou unikátní', () => {
+    const ids = ITEMS.map((item) => item.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  test('každá kategorie má 4 kousky do obchodu, z toho 1 zdarma', () => {
+    for (const category of CATEGORIES) {
+      const shopItems = ITEMS.filter((item) => item.category === category && item.price !== null)
+      expect(shopItems, category).toHaveLength(4)
+      expect(shopItems.filter((item) => item.price === 0), category).toHaveLength(1)
+    }
+    expect(STARTER_ITEMS).toHaveLength(CATEGORIES.length)
+  })
+
+  test('placené kousky mají cenu v dohodnutém rozsahu', () => {
+    for (const item of ITEMS) {
+      if (item.price === null || item.price === 0) continue
+      const [min, max] = PRICE_RANGES[item.category]
+      expect(item.price, item.id).toBeGreaterThanOrEqual(min)
+      expect(item.price, item.id).toBeLessThanOrEqual(max)
+    }
+  })
+
+  test('nekoupitelné kousky se odemykají existujícím odznakem', () => {
+    const locked = ITEMS.filter((item) => item.price === null)
+    expect(locked.map((item) => item.id)).toEqual(['acc-crown'])
+    for (const item of locked) expect(BADGE_IDS).toContain(item.unlockBadge)
+  })
+
+  test('kategorie a vrstvy mají platné hodnoty', () => {
+    for (const item of ITEMS) {
+      expect(CATEGORIES, item.id).toContain(item.category)
+      expect(LAYER_ORDER, item.id).toContain(item.layer)
+      expect(['background', 'body'], item.id).not.toContain(item.layer)
+      expect(item.name.length, item.id).toBeGreaterThan(0)
+      expect(item.asset.length, item.id).toBeGreaterThan(0)
+    }
+  })
+})

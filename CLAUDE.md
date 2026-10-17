@@ -17,9 +17,11 @@ vydělané řešením matematických příkladů.
 
 ## Stav a uložení
 
-- `localStorage` s klíčem `panenka_save_v1`
-- `saveVersion: 1` v každém záznamu
-- Veškeré čtení/zápis v `try/catch`; při poškozených datech reset na výchozí stav (bez pádu)
+- `localStorage` s klíčem `panenka_save`, verze je uvnitř dat (`saveVersion: 1`)
+- Veškeré čtení/zápis v `try/catch`; při poškozených datech výchozí stav (bez pádu)
+  a původní text se schová pod `panenka_save_corrupt` pro ruční záchranu
+- `parseSave()` validuje a čistí data (neznámé kousky/odznaky zahodí, startovní kousky doplní,
+  úroveň srovná do mezí rodiče) — použije se i při importu JSON v rodičovském panelu
 
 ## Grafika
 
@@ -28,7 +30,9 @@ vydělané řešením matematických příkladů.
 - Každá položka v `src/data/items.json`: `{ id, name, category, price, layer, asset }`
 - Komponenta vrstvy umí SVG i PNG (pro pozdější výměnu grafiky bez změny logiky)
 - 4 kategorie × 4 kusy = 16 položek celkem
-- Na startu 1 kousek z každé kategorie zdarma (default outfit)
+- Na startu 1 kousek z každé kategorie zdarma (default outfit) — v items.json `price: 0`
+- Korunka je 17. položka s `price: null` a `unlockBadge` — nedá se koupit, odemyká ji odznak
+- Na sobě vždy nejvýš 1 kousek z každé kategorie (i u doplňků) — rozhodnutí Clauda pro MVP
 
 ## Obrazovky (spodní lišta, 4 záložky)
 
