@@ -1,6 +1,23 @@
 import { describe, expect, test } from 'vitest'
-import { buyItem } from '../lib/economy'
+import { buyItem, rewardForCorrect, rollChestReward } from '../lib/economy'
 import { createDefaultSave } from '../lib/storage'
+import { seededRng } from './seededRng'
+
+describe('odměny', () => {
+  test('za správnou odpověď 10, na těžších stupních (do 100) 15', () => {
+    expect([1, 2, 3, 4].map((level) => rewardForCorrect(level as 1 | 2 | 3 | 4))).toEqual([10, 10, 15, 15])
+  })
+
+  test('truhla dá 20 až 40 zlaťáků včetně krajních hodnot', () => {
+    const rng = seededRng(9)
+    const values = new Set(Array.from({ length: 2000 }, () => rollChestReward(rng)))
+    expect(Math.min(...values)).toBe(20)
+    expect(Math.max(...values)).toBe(40)
+    expect(values.size).toBe(21)
+    expect(rollChestReward(() => 0)).toBe(20)
+    expect(rollChestReward(() => 0.999999)).toBe(40)
+  })
+})
 
 describe('nákup v obchodě', () => {
   test('koupí kousek, odečte cenu a přidá ho mezi vlastněné', () => {

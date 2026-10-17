@@ -1,5 +1,18 @@
 import { ITEMS_BY_ID } from '../data/items'
-import type { SaveData } from '../types'
+import type { Level, Rng, SaveData } from '../types'
+
+export const HARD_LEVEL: Level = 3
+
+export function rewardForCorrect(level: Level): number {
+  return level >= HARD_LEVEL ? 15 : 10
+}
+
+export const CHEST_MIN = 20
+export const CHEST_MAX = 40
+
+export function rollChestReward(rng: Rng = Math.random): number {
+  return CHEST_MIN + Math.floor(rng() * (CHEST_MAX - CHEST_MIN + 1))
+}
 
 export type BuyFailure = 'unknown-item' | 'not-for-sale' | 'already-owned' | 'not-enough-gold'
 

@@ -57,6 +57,24 @@ vydělané řešením matematických příkladů.
 - Vlastní velká číselná klávesnice (ne systémová)
 - Po 5 správných v řadě: bonusová truhla, náhodná odměna 20–40 zlaťáků
 
+#### Stupně obtížnosti (schváleno)
+| Stupeň | Sčítání/odčítání, chybějící číslo, porovnávání | Násobilka (řady) |
+|---|---|---|
+| 1 | do 20 bez přechodu přes desítku | 2, 5, 10 |
+| 2 | do 20 s přechodem | + 3, 4 |
+| 3 | do 100 bez přechodu | + 6, 7 |
+| 4 | do 100 s přechodem | + 8, 9 |
+
+- Přechod: sčítání = jednotky dají víc než 10; odčítání = jednotky menšence nestačí.
+- Násobilka: činitel 1–10, zápis `k · řada` (české „·“, minus jako „−“).
+- Odměna 10 zlaťáků na stupních 1–2, 15 na stupních 3–4 (podle stupně, na kterém příklad vznikl).
+- Chybějící číslo skrývá první nebo druhý člen; porovnávání = výraz vs. číslo, ~1/3 rovnost.
+- Každý pokus se počítá: chyba nuluje řadu správných, správná odpověď nuluje řadu chyb.
+  Po povýšení/snížení se řada nuluje. Truhla po každých 5 správných v řadě i na maximálním stupni.
+- Nápověda nikdy neukazuje výsledek posledního kroku („8 + 2 = 10, a ještě + 5.“).
+- Kód: `lib/mathGenerator.ts` (příklady, nápovědy), `lib/difficulty.ts` (adaptivita),
+  `lib/economy.ts` (odměny, truhla, nákup). Testy používají deterministické RNG.
+
 ### 4. Síň slávy
 - Odznaky za úspěchy; některé odemykají nekoupitelné kousky
 - MVP odznaky:

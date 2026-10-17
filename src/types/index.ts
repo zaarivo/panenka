@@ -14,6 +14,9 @@ export type ProblemType = (typeof PROBLEM_TYPES)[number]
 export const LEVELS = [1, 2, 3, 4] as const
 export type Level = (typeof LEVELS)[number]
 
+/** Náhodné číslo v intervalu [0, 1), jako Math.random. V testech se podstrčí deterministické. */
+export type Rng = () => number
+
 export interface Item {
   id: string
   name: string
