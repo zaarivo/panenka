@@ -17,6 +17,9 @@ vydělané řešením matematických příkladů.
 - **Offline** ověřeno: po prvním načtení service worker uloží 12 souborů (HTML, JS, CSS, ikony,
   manifest) a hra se načte i s vypnutým serverem. Service worker funguje jen na HTTPS nebo localhost.
 - `npm run preview` = produkční build na http://localhost:4173/panenka/ (test PWA a offline).
+- **Nasazení**: `.github/workflows/deploy.yml` — při každém push do `main` spustí testy, build
+  s `BASE_PATH=/<název-repozitáře>/` a nasadí na GitHub Pages. V repozitáři musí být
+  Settings → Pages → Source: „GitHub Actions“. Adresa: https://<uživatel>.github.io/<repozitář>/
 - **Vitest** — testy pro mathGenerator a ekonomiku
 - **Web Audio API** — zvuky generovány kódem, žádné externí soubory
 - **Zero network requests** — vše funguje offline
