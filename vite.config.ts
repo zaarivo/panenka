@@ -13,8 +13,10 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      // Ikony i ostatní soubory z public/ pokrývá workbox.globPatterns, takže je nepřidáváme podruhé.
+      includeManifestIcons: false,
       manifest: {
+        id: base,
         name: 'Panenka – matematická módní hra',
         short_name: 'Panenka',
         description: 'Oblékej panenku za zlaťáky z matematických příkladů.',
@@ -26,7 +28,10 @@ export default defineConfig({
         background_color: '#fdf2f8',
         theme_color: '#f9a8d4',
         icons: [
-          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
+          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {

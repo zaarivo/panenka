@@ -11,6 +11,12 @@ vydělané řešením matematických příkladů.
 - **TypeScript** — rozhodnutí Clauda (zadání jazyk neurčilo)
 - **vite-plugin-pwa** — manifest, ikony (PNG 192/512 + maskable, generované jednorázovým skriptem ze SVG), service worker (offline funguje)
 - **base** — výchozí `'/panenka/'` pro GitHub Pages, přepsatelné proměnnou `BASE_PATH` při buildu
+- **Ikony PWA** se generují z `public/icon.svg` příkazem `npm run generate-pwa-assets`
+  (`pwa-assets.config.ts`, @vite-pwa/assets-generator): pwa-64/192/512, maskable-512, apple-touch-180,
+  favicon.ico. Vygenerované PNG jsou v gitu; po změně icon.svg je přegenerovat.
+- **Offline** ověřeno: po prvním načtení service worker uloží 12 souborů (HTML, JS, CSS, ikony,
+  manifest) a hra se načte i s vypnutým serverem. Service worker funguje jen na HTTPS nebo localhost.
+- `npm run preview` = produkční build na http://localhost:4173/panenka/ (test PWA a offline).
 - **Vitest** — testy pro mathGenerator a ekonomiku
 - **Web Audio API** — zvuky generovány kódem, žádné externí soubory
 - **Zero network requests** — vše funguje offline
