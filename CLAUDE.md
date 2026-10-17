@@ -45,7 +45,12 @@ vydělané řešením matematických příkladů.
 
 ### 1. Šatník
 - Oblékání z vlastněných věcí (klepnutím nasadit/sundat)
+- Vlasy jdou jen vyměnit, ne sundat (schváleno) — `ALWAYS_WORN` v `lib/wardrobe.ts`
+- Bez šatů má panenka bílé tílko a kraťásky (součást těla)
 - Tlačítko „Vyfotit": canvas render → PNG → Web Share API nebo ke stažení
+  - `lib/photo.ts`: PNG 600 × 1200 (2×), PNG vrstvy se před vykreslením vloží jako data URL
+  - Sdílení přes Web Share API ověřit na telefonu (v prohlížeči na PC jde stažení)
+- Náhledy kousků: tělo + kousek, výřez podle kategorie / konkrétního doplňku (`thumbnailViewBox`)
 
 ### 2. Obchod
 - Ceny z items.json: doplňky 20–30, boty/vlasy 40, šaty 50–60 zlaťáků
