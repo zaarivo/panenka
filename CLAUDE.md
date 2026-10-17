@@ -108,6 +108,11 @@ vydělané řešením matematických příkladů.
   - „První krok": 10 správných celkem
   - „Násobilková hvězda": 10 správných z násobilky v řadě → odemkne korunku
   - „Pilná školačka": 100 správných celkem
+- Logika v `lib/badges.ts` (`BADGES`, `awardBadges`). Odemčené kousky se berou z `unlockBadge`
+  v items.json; `awardBadges` je doplní i k dříve získaným odznakům (např. po importu).
+- Odznaky se kontrolují po každé správné odpovědi a při načtení hry; získaný odznak už nezmizí.
+- Nový odznak = oslavné okno nad čímkoli (fronta, když jich padne víc najednou); u odznaku
+  s odměnou tlačítko „Do šatníku“. Síň slávy ukazuje u nezískaných odznaků postup (např. 9/10).
 
 ## Rodičovský panel
 

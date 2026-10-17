@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { BadgeCelebration } from './components/fame/BadgeCelebration'
 import { Navigation, type Tab } from './components/Navigation'
 import { AcademyScreen } from './components/screens/AcademyScreen'
+import { HallOfFameScreen } from './components/screens/HallOfFameScreen'
 import { ShopScreen } from './components/screens/ShopScreen'
 import { WardrobeScreen } from './components/screens/WardrobeScreen'
 import { useGameState } from './hooks/useGameState'
@@ -9,6 +11,7 @@ export default function App() {
   const game = useGameState()
   const { save } = game
   const [tab, setTab] = useState<Tab>('wardrobe')
+  const celebration = game.celebrations[0]
 
   return (
     <div className="mx-auto flex h-full max-w-md flex-col">
@@ -26,11 +29,19 @@ export default function App() {
             onGoToShop={() => setTab('shop')}
           />
         </div>
-        {tab === 'fame' && (
-          <p className="flex h-full items-center justify-center p-6 text-center text-xl text-violet-400">Síň slávy se brzy otevře.</p>
-        )}
+        {tab === 'fame' && <HallOfFameScreen save={save} />}
       </main>
       <Navigation active={tab} onChange={setTab} />
+
+      {celebration && (
+        <BadgeCelebration
+          key={celebration.id}
+          badge={celebration}
+          soundOn={save.settings.soundOn}
+          onClose={game.dismissCelebration}
+          onShowWardrobe={() => setTab('wardrobe')}
+        />
+      )}
     </div>
   )
 }
