@@ -122,6 +122,19 @@ vydělané řešením matematických příkladů.
 - Export/import postupu jako JSON (s validací při importu)
 - Reset hry s potvrzením
 
+#### Rozhodnutí ke kroku 9 (Claude)
+- PIN (4 číslice, 2× pro kontrolu) se nastavuje na úvodní obrazovce při prvním spuštění, dokud
+  není nastaven, hra se neukáže. Ozubené kolečko je v hlavičce Síně slávy.
+- PIN je jen dětský zámek: ukládá se jako otisk FNV-1a (`hashPin`), ne jako text. Funguje i bez
+  HTTPS (test na telefonu v síti). Zapomenutý PIN = smazat data stránky v prohlížeči.
+- Obtížnost: zaškrtávátka stupňů 1–4 tvoří vždy souvislý rozsah (`toggleLevelRange`).
+- Reset smaže postup (zlaťáky, oblečení, odznaky, statistiky, stupeň), PIN a nastavení zůstanou.
+- Export = JSON celého stavu `panenka-postup-RRRR-MM-DD.json`. Import: max 100 kB, validace přes
+  `parseSave`, potvrzení s přehledem; když záloha nemá PIN, zůstane současný. Odznaky z importu
+  se neoslavují.
+- Změna typů/obtížnosti, reset i import začnou v Akademii nové kolo (React `key`).
+- Logika: `lib/parent.ts`, UI: `components/parent/`.
+
 ## UI
 
 - Mobil na výšku, min. 56 px dotyková tlačítka

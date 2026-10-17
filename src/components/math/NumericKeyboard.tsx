@@ -1,18 +1,28 @@
 import { BackspaceIcon } from '../ui/icons'
 
-const MAX_DIGITS = 3
-
 interface NumericKeyboardProps {
   value: string
   onChange: (value: string) => void
   onSubmit: () => void
   disabled?: boolean
+  maxDigits?: number
+  submitLabel?: string
+  /** Pro PIN: povolí úvodní nulu (např. 0123). */
+  allowLeadingZero?: boolean
 }
 
-export function NumericKeyboard({ value, onChange, onSubmit, disabled }: NumericKeyboardProps) {
+export function NumericKeyboard({
+  value,
+  onChange,
+  onSubmit,
+  disabled,
+  maxDigits = 3,
+  submitLabel = 'Hotovo',
+  allowLeadingZero = false,
+}: NumericKeyboardProps) {
   function press(digit: string) {
-    if (value === '0') onChange(digit)
-    else if (value.length < MAX_DIGITS) onChange(value + digit)
+    if (value === '0' && !allowLeadingZero) onChange(digit)
+    else if (value.length < maxDigits) onChange(value + digit)
   }
 
   const key = 'flex h-16 items-center justify-center rounded-2xl text-3xl font-bold shadow-sm active:scale-95 disabled:opacity-40'
@@ -42,7 +52,7 @@ export function NumericKeyboard({ value, onChange, onSubmit, disabled }: Numeric
         onClick={onSubmit}
         className={`${key} bg-pink-400 text-xl text-white`}
       >
-        Hotovo
+        {submitLabel}
       </button>
     </div>
   )

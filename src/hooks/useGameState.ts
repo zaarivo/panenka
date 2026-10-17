@@ -3,13 +3,16 @@ import { addGold, applyCorrectAnswer, applyWrongAnswer } from '../lib/academy'
 import { BADGES, awardBadges, type Badge } from '../lib/badges'
 import { buyItem, rewardForCorrect, type BuyResult } from '../lib/economy'
 import type { Problem } from '../lib/mathGenerator'
+import { hashPin, resetProgress, updateSettings } from '../lib/parent'
 import { loadSave, writeSave } from '../lib/storage'
 import { toggleEquip } from '../lib/wardrobe'
-import type { BadgeId, Level, SaveData } from '../types'
+import type { BadgeId, Level, SaveData, Settings } from '../types'
 
 export function useGameState() {
   const [save, setSave] = useState<SaveData>(() => awardBadges(loadSave()).save)
   const [celebrations, setCelebrations] = useState<Badge[]>([])
+  /** Mění se při resetu a importu, aby Akademie začala znovu s novým stavem. */
+  const [generation, setGeneration] = useState(0)
   const knownBadges = useRef<readonly BadgeId[]>(save.badges)
 
   useEffect(() => {
@@ -54,8 +57,26 @@ export function useGameState() {
     [],
   )
 
+  const setPin = useCallback((pin: string) => setSave((current) => ({ ...current, parentPinHash: hashPin(pin) })), [])
+
+  const changeSettings = useCallback(
+    (settings: Settings) => setSave((current) => updateSettings(current, settings)),
+    [],
+  )
+
+  /** Nový stav bez oslav — odznaky z importu nebo po resetu se neoslavují. */
+  const replaceSave = useCallback((next: SaveData) => {
+    knownBadges.current = next.badges
+    setCelebrations([])
+    setSave(next)
+    setGeneration((value) => value + 1)
+  }, [])
+
+  const reset = useCallback(() => replaceSave(resetProgress(save)), [replaceSave, save])
+
   return {
     save,
+    generation,
     celebrations,
     dismissCelebration,
     toggleItem,
@@ -64,5 +85,9 @@ export function useGameState() {
     answerWrong,
     receiveGold,
     setSoundOn,
+    setPin,
+    changeSettings,
+    replaceSave,
+    reset,
   }
 }

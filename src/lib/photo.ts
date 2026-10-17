@@ -1,4 +1,5 @@
 import { CANVAS } from '../graphics'
+import { downloadBlob } from './download'
 
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -70,13 +71,6 @@ export async function shareOrDownload(blob: Blob, filename: string): Promise<Sha
       // sdílení selhalo jinak (např. nepovolené) — zkusíme stažení
     }
   }
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.append(link)
-  link.click()
-  link.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 10_000)
+  downloadBlob(blob, filename)
   return 'downloaded'
 }

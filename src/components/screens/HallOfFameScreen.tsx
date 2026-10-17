@@ -3,16 +3,27 @@ import { plural } from '../../lib/czech'
 import type { SaveData } from '../../types'
 import { ItemThumbnail } from '../doll/ItemThumbnail'
 import { BadgeMedal } from '../fame/BadgeMedal'
+import { GearIcon } from '../ui/icons'
 
-export function HallOfFameScreen({ save }: { save: SaveData }) {
+export function HallOfFameScreen({ save, onOpenParent }: { save: SaveData; onOpenParent: () => void }) {
   const solved = save.stats.totalCorrect
   return (
     <div className="flex h-full flex-col gap-3 overflow-y-auto p-3">
-      <header>
-        <h1 className="text-2xl font-bold text-violet-700">Síň slávy</h1>
-        <p className="text-base text-violet-500">
-          Zatím jsi správně vyřešila {solved} {plural(solved, 'příklad', 'příklady', 'příkladů')}.
-        </p>
+      <header className="flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold text-violet-700">Síň slávy</h1>
+          <p className="text-base text-violet-500">
+            Zatím jsi správně vyřešila {solved} {plural(solved, 'příklad', 'příklady', 'příkladů')}.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onOpenParent}
+          aria-label="Nastavení pro rodiče"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-violet-300 active:bg-violet-100"
+        >
+          <GearIcon className="h-6 w-6" />
+        </button>
       </header>
 
       {BADGES.map((badge) => {
