@@ -56,6 +56,9 @@ vydělané řešením matematických příkladů.
 - Ceny z items.json: doplňky 20–30, boty/vlasy 40, šaty 50–60 zlaťáků
 - Zamčené věci šedě s cenou
 - Potvrzovací dialog před nákupem
+- V obchodě jen 12 kousků s cenou > 0 (startovní kousky a korunka tam nejsou) — rozhodnutí Clauda
+- Když zlaťáky nestačí: dialog s chybějící částkou a tlačítkem „Jít počítat“ do Akademie
+- Texty neskloňují názvy kousků (název je vždy v 1. pádě), počty zlaťáků přes `formatGold()`
 
 ### 3. Matematická akademie
 - Generátor příkladů kódem (ne pevný seznam), výsledky počítá kód, vždy ≥ 0
