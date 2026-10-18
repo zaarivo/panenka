@@ -18,9 +18,14 @@ export function ProblemCard({ problem, answer, state }: ProblemCardProps) {
 
   return (
     <div
-      className="flex min-h-28 flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-3xl bg-white px-3 py-4 text-5xl font-bold text-violet-800 shadow-sm"
+      className="flex min-h-28 shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-3xl bg-white px-3 py-4 text-5xl font-bold text-violet-800 shadow-sm"
       aria-live="polite"
     >
+      {problem.story && (
+        <p className="w-full text-left text-lg leading-snug font-semibold text-violet-800" data-story>
+          {problem.story}
+        </p>
+      )}
       {problem.prompt.split(' ').map((token, index) =>
         token === '?' ? (
           <span

@@ -25,7 +25,7 @@ export function NumericKeyboard({
     else if (value.length < maxDigits) onChange(value + digit)
   }
 
-  const key = 'flex h-16 items-center justify-center rounded-2xl text-3xl font-bold shadow-sm active:scale-95 disabled:opacity-40'
+  const key = 'flex h-14 items-center justify-center rounded-2xl text-3xl font-bold shadow-sm active:scale-95 disabled:opacity-40'
 
   return (
     <div className="grid grid-cols-3 gap-2" aria-label="Klávesnice">

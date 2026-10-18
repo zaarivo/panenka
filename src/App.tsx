@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { BadgeCelebration } from './components/fame/BadgeCelebration'
 import { LockScreen } from './components/lock/LockScreen'
+import { PracticePicker } from './components/lock/PracticePicker'
 import { TimePicker } from './components/lock/TimePicker'
 import { TimerBar } from './components/lock/TimerBar'
 import { Navigation, type Tab } from './components/Navigation'
@@ -15,7 +16,8 @@ import { useGameState } from './hooks/useGameState'
 import { usePlayTime, type TimeChoice } from './hooks/usePlayTime'
 import type { Problem } from './lib/mathGenerator'
 import { verifyPin } from './lib/parent'
-import type { Level } from './types'
+import { toggleTier } from './lib/topics'
+import type { Tier } from './types'
 
 export default function App() {
   const game = useGameState()
@@ -23,16 +25,16 @@ export default function App() {
   const { save } = game
   const [tab, setTab] = useState<Tab>('wardrobe')
   const [parent, setParent] = useState<'closed' | 'gate' | 'open'>('closed')
-  /** Odemykání po zamčení: nejdřív PIN, pak výběr času. */
-  const [unlocking, setUnlocking] = useState<'none' | 'pin' | 'time'>('none')
+  /** Odemykání po zamčení: PIN → Krok 1 (co procvičíme) → Krok 2 (čas). */
+  const [unlocking, setUnlocking] = useState<'none' | 'pin' | 'practice' | 'time'>('none')
   const [academyBusy, setAcademyBusy] = useState(false)
   const celebration = game.celebrations[0]
 
   const { answerCorrect, receiveGold } = game
   const { addEarned } = playTime
   const onCorrect = useCallback(
-    (problem: Problem, nextLevel: Level) => {
-      const reward = answerCorrect(problem, nextLevel)
+    (problem: Problem, nextTier: Tier, success: boolean) => {
+      const reward = answerCorrect(problem, nextTier, success)
       addEarned(reward)
       return reward
     },
@@ -56,13 +58,25 @@ export default function App() {
       <PinSetupScreen
         onSetPin={(pin) => {
           game.setPin(pin)
-          setUnlocking('time')
+          setUnlocking('practice')
         }}
       />
     )
   }
 
-  if (unlocking === 'time') return <TimePicker onStart={startPlaying} />
+  if (unlocking === 'practice') {
+    return (
+      <PracticePicker
+        save={save}
+        onToggle={(topic, tier) => game.changeTopics(toggleTier(save.settings.topics, topic, tier))}
+        onAccept={game.acceptAdvice}
+        onSnooze={game.snoozeAdvice}
+        onNext={() => setUnlocking('time')}
+      />
+    )
+  }
+
+  if (unlocking === 'time') return <TimePicker onStart={startPlaying} onBack={() => setUnlocking('practice')} />
 
   // Rozdělaný příklad v Akademii smí dopočítat; jinde se zamkne hned.
   const waitingForProblem = playTime.expired && tab === 'academy' && academyBusy
@@ -79,7 +93,7 @@ export default function App() {
         {unlocking === 'pin' && (
           <ParentGate
             checkPin={(pin) => verifyPin(save, pin)}
-            onUnlock={() => setUnlocking('time')}
+            onUnlock={() => setUnlocking('practice')}
             onCancel={() => setUnlocking('none')}
             cancelLabel="Zpět"
           />
@@ -90,7 +104,7 @@ export default function App() {
 
   const { settings } = save
   // Nové nastavení, reset nebo import = nové kolo v Akademii podle aktuálních pravidel.
-  const academyKey = [game.generation, settings.enabledTypes.join(), settings.minLevel, settings.maxLevel].join('|')
+  const academyKey = `${game.generation}|${JSON.stringify(settings.topics)}`
 
   return (
     <div className="mx-auto flex h-full max-w-md flex-col">
@@ -113,6 +127,7 @@ export default function App() {
             onGoToShop={() => setTab('shop')}
             lockRequested={playTime.expired}
             onBusyChange={setAcademyBusy}
+            active={tab === 'academy' && parent === 'closed'}
           />
         </div>
         {tab === 'fame' && <HallOfFameScreen save={save} onOpenParent={() => setParent('gate')} />}
@@ -135,7 +150,8 @@ export default function App() {
       {parent === 'open' && (
         <ParentPanel
           save={save}
-          onChangeSettings={game.changeSettings}
+          onChangeTopics={game.changeTopics}
+          onSoundChange={game.setSoundOn}
           onReplaceSave={game.replaceSave}
           onReset={game.reset}
           onClose={() => setParent('closed')}

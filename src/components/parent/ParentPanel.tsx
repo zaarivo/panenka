@@ -2,28 +2,17 @@ import { useRef, useState, type ReactNode } from 'react'
 import { BADGES } from '../../lib/badges'
 import { formatGold, plural } from '../../lib/czech'
 import { downloadBlob } from '../../lib/download'
-import { MULTIPLICATION_ROWS } from '../../lib/mathGenerator'
-import { MAX_IMPORT_BYTES, exportFileName, exportProgress, importProgress, toggleLevelRange } from '../../lib/parent'
-import { LEVELS, PROBLEM_TYPES, type Level, type ProblemType, type SaveData, type Settings } from '../../types'
+import { MAX_IMPORT_BYTES, exportFileName, exportProgress, importProgress } from '../../lib/parent'
+import { successRate } from '../../lib/practice'
+import { practiceKey, toggleTier } from '../../lib/topics'
+import { TIERS, TOPIC_IDS, type PracticeKey, type SaveData, type TopicSettings } from '../../types'
+import { TopicEditor } from '../practice/TopicEditor'
 import { Dialog } from '../ui/Dialog'
-
-const TYPE_LABELS: Record<ProblemType, string> = {
-  addSub: 'Sčítání a odčítání',
-  multiplication: 'Malá násobilka',
-  missingNumber: 'Chybějící číslo (7 + ? = 15)',
-  comparison: 'Porovnávání (<, >, =)',
-}
-
-const LEVEL_LABELS: Record<Level, string> = {
-  1: 'do 20 bez přechodu přes desítku',
-  2: 'do 20 s přechodem přes desítku',
-  3: 'do 100 bez přechodu',
-  4: 'do 100 s přechodem',
-}
 
 interface ParentPanelProps {
   save: SaveData
-  onChangeSettings: (settings: Settings) => void
+  onChangeTopics: (topics: TopicSettings) => void
+  onSoundChange: (soundOn: boolean) => void
   onReplaceSave: (save: SaveData) => void
   onReset: () => void
   onClose: () => void
@@ -59,22 +48,15 @@ function CheckRow({
 
 type Pending = { kind: 'import'; save: SaveData } | { kind: 'reset' } | null
 
-export function ParentPanel({ save, onChangeSettings, onReplaceSave, onReset, onClose }: ParentPanelProps) {
+export function ParentPanel({ save, onChangeTopics, onSoundChange, onReplaceSave, onReset, onClose }: ParentPanelProps) {
   const { settings } = save
   const fileInput = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState<Pending>(null)
   const [message, setMessage] = useState<{ text: string; tone: 'ok' | 'error' } | null>(null)
 
-  function toggleType(type: ProblemType) {
-    const enabledTypes = settings.enabledTypes.includes(type)
-      ? settings.enabledTypes.filter((t) => t !== type)
-      : [...settings.enabledTypes, type]
-    if (enabledTypes.length > 0) onChangeSettings({ ...settings, enabledTypes })
-  }
-
-  function toggleLevel(level: Level) {
-    onChangeSettings({ ...settings, ...toggleLevelRange(settings.minLevel, settings.maxLevel, level) })
-  }
+  const rates: Partial<Record<PracticeKey, number | null>> = Object.fromEntries(
+    TOPIC_IDS.flatMap((topic) => TIERS.map((tier) => [practiceKey(topic, tier), successRate(save.practice[practiceKey(topic, tier)])])),
+  )
 
   function exportSave() {
     downloadBlob(new Blob([exportProgress(save)], { type: 'application/json' }), exportFileName())
@@ -97,8 +79,6 @@ export function ParentPanel({ save, onChangeSettings, onReplaceSave, onReset, on
     setPending({ kind: 'import', save: imported })
   }
 
-  const levelRange = (level: Level) => level >= settings.minLevel && level <= settings.maxLevel
-
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-pink-50">
       <div className="mx-auto flex max-w-md flex-col gap-3 p-3 pb-8">
@@ -116,44 +96,23 @@ export function ParentPanel({ save, onChangeSettings, onReplaceSave, onReset, on
             <li>
               Odznaky: <strong>{save.badges.length} z {BADGES.length}</strong>
             </li>
-            <li>
-              Současný stupeň: <strong>{save.level}</strong> ({LEVEL_LABELS[save.level]})
-            </li>
           </ul>
         </Section>
 
-        <Section title="Typy příkladů">
-          {PROBLEM_TYPES.map((type) => {
-            const checked = settings.enabledTypes.includes(type)
-            return (
-              <CheckRow
-                key={type}
-                checked={checked}
-                disabled={checked && settings.enabledTypes.length === 1}
-                onChange={() => toggleType(type)}
-              >
-                {TYPE_LABELS[type]}
-              </CheckRow>
-            )
-          })}
-          <p className="mt-1 text-sm text-violet-500">Aspoň jeden typ musí zůstat zapnutý.</p>
-        </Section>
-
-        <Section title="Obtížnost">
-          {LEVELS.map((level) => (
-            <CheckRow key={level} checked={levelRange(level)} onChange={() => toggleLevel(level)}>
-              <strong>Stupeň {level}:</strong> {LEVEL_LABELS[level]}
-              <span className="block text-sm text-violet-500">násobilka: řady {MULTIPLICATION_ROWS[level].join(', ')}</span>
-            </CheckRow>
-          ))}
-          <p className="mt-1 text-sm text-violet-500">
-            Hra se mezi zaškrtnutými stupni posouvá sama: po 5 správných v řadě o stupeň výš, po 2 chybách o stupeň níž.
-            Stupně tvoří vždy souvislý rozsah.
+        <Section title="Co procvičovat">
+          <p className="mb-2 text-sm text-violet-500">
+            Hra se v každé kategorii posouvá sama mezi zaškrtnutými obtížnostmi: po 5 správných v řadě výš, po 2 chybách
+            níž. U zaškrtnutých obtížností je úspěšnost z posledních 20 příkladů (správně napoprvé a v časovém limitu).
           </p>
+          <TopicEditor
+            topics={settings.topics}
+            rates={rates}
+            onToggle={(topic, tier) => onChangeTopics(toggleTier(settings.topics, topic, tier))}
+          />
         </Section>
 
         <Section title="Zvuk">
-          <CheckRow checked={settings.soundOn} onChange={() => onChangeSettings({ ...settings, soundOn: !settings.soundOn })}>
+          <CheckRow checked={settings.soundOn} onChange={() => onSoundChange(!settings.soundOn)}>
             Zvuky zapnuté
           </CheckRow>
         </Section>

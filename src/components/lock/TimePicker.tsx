@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { TimeChoice } from '../../hooks/usePlayTime'
 import { DEFAULT_MINUTES, MAX_MINUTES, MIN_MINUTES, PRESET_MINUTES, adjustMinutes } from '../../lib/playTime'
 
-export function TimePicker({ onStart }: { onStart: (choice: TimeChoice) => void }) {
+export function TimePicker({ onStart, onBack }: { onStart: (choice: TimeChoice) => void; onBack: () => void }) {
   const [choice, setChoice] = useState<TimeChoice>(DEFAULT_MINUTES)
   const minutes = choice === 'unlimited' ? DEFAULT_MINUTES : choice
 
@@ -13,6 +13,7 @@ export function TimePicker({ onStart }: { onStart: (choice: TimeChoice) => void 
 
   return (
     <div className="mx-auto flex h-full max-w-md flex-col gap-3 overflow-y-auto p-4">
+      <p className="text-center text-sm font-semibold text-violet-400">Krok 2 ze 2</p>
       <div className="rounded-3xl bg-white p-4 text-center shadow-sm">
         <h1 className="text-2xl font-bold text-pink-500">Jak dlouho dnes?</h1>
         <p className="mt-1 text-base text-violet-500">Po uplynutí času se hra zamkne.</p>
@@ -56,13 +57,22 @@ export function TimePicker({ onStart }: { onStart: (choice: TimeChoice) => void 
       </button>
 
       <div className="flex-1" />
-      <button
-        type="button"
-        onClick={() => onStart(choice)}
-        className="min-h-14 rounded-2xl bg-pink-400 text-xl font-bold text-white shadow-sm active:scale-95"
-      >
-        Pokračovat do hry
-      </button>
+      <div className="grid grid-cols-[1fr_2fr] gap-2">
+        <button
+          type="button"
+          onClick={onBack}
+          className="min-h-14 rounded-2xl bg-violet-100 text-lg font-bold text-violet-600 active:scale-95"
+        >
+          Zpět
+        </button>
+        <button
+          type="button"
+          onClick={() => onStart(choice)}
+          className="min-h-14 rounded-2xl bg-pink-400 text-xl font-bold text-white shadow-sm active:scale-95"
+        >
+          Pokračovat do hry
+        </button>
+      </div>
     </div>
   )
 }

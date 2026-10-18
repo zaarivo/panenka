@@ -1,11 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { ROUND_SIZE } from '../../lib/academy'
 import { formatGold } from '../../lib/czech'
-import { CORRECT_IN_ROW_TO_LEVEL_UP, skipProblem, updateDifficulty, type DifficultyState } from '../../lib/difficulty'
+import {
+  CORRECT_IN_ROW_FOR_CHEST,
+  clampTier,
+  skipTopicProgress,
+  updateChestStreak,
+  updateTopicProgress,
+  type TopicProgress,
+} from '../../lib/difficulty'
 import { rollChestReward } from '../../lib/economy'
-import { generateProblem, isCorrectAnswer, type CompareSign, type Problem } from '../../lib/mathGenerator'
+import { generateProblem, isCorrectAnswer, pickTopic, type CompareSign, type Problem } from '../../lib/mathGenerator'
+import { isSuccess } from '../../lib/practice'
 import { playChest, playCoin } from '../../lib/sound'
-import type { Level, SaveData } from '../../types'
+import { ActiveStopwatch } from '../../lib/stopwatch'
+import { enabledTopics } from '../../lib/topics'
+import { TOPIC_IDS, type SaveData, type Tier, type TopicId, type TopicSettings } from '../../types'
 import { CompareButtons } from '../math/CompareButtons'
 import { NumericKeyboard } from '../math/NumericKeyboard'
 import { ProblemCard } from '../math/ProblemCard'
@@ -22,17 +32,36 @@ type Phase = 'answering' | 'wrong' | 'correct' | 'skipped' | 'chest' | 'summary'
 /** Fáze, kdy je příklad rozdělaný (včetně pochvaly a truhly) — časový zámek počká. */
 const BUSY_PHASES: readonly Phase[] = ['answering', 'wrong', 'correct', 'skipped', 'chest']
 
+type ProgressByTopic = Record<TopicId, TopicProgress>
+
+function initialProgress(save: SaveData): ProgressByTopic {
+  return Object.fromEntries(
+    TOPIC_IDS.map((topic) => [
+      topic,
+      { tier: clampTier(save.currentTier[topic], save.settings.topics[topic]), correctStreak: 0, mistakeStreak: 0 },
+    ]),
+  ) as ProgressByTopic
+}
+
+function createProblem(topics: TopicSettings, progress: ProgressByTopic, previousKey?: string): Problem {
+  const topic = pickTopic(enabledTopics(topics))
+  return generateProblem({ topic, tier: progress[topic].tier, previousKey })
+}
+
 interface AcademyScreenProps {
   save: SaveData
-  onCorrect: (problem: Problem, nextLevel: Level) => number
-  onWrong: (problem: Problem, nextLevel: Level) => void
-  onSkip: (problem: Problem, nextLevel: Level) => void
+  /** `success` = správně napoprvé a v časovém limitu (jen pro statistiku rodiče). */
+  onCorrect: (problem: Problem, nextTier: Tier, success: boolean) => number
+  onWrong: (problem: Problem, nextTier: Tier) => void
+  onSkip: (problem: Problem, nextTier: Tier) => void
   onReceiveGold: (amount: number) => void
   onSoundChange: (soundOn: boolean) => void
   onGoToShop: () => void
   /** Čas vypršel: dokončit rozdělaný příklad, další už nedávat. */
   lockRequested: boolean
   onBusyChange: (busy: boolean) => void
+  /** Otevřená záložka Akademie — jen tehdy se měří čas řešení. */
+  active: boolean
 }
 
 export function AcademyScreen({
@@ -45,10 +74,17 @@ export function AcademyScreen({
   onGoToShop,
   lockRequested,
   onBusyChange,
+  active,
 }: AcademyScreenProps) {
   const { settings } = save
-  const [difficulty, setDifficulty] = useState<DifficultyState>({ level: save.level, correctStreak: 0, mistakeStreak: 0 })
-  const [problem, setProblem] = useState(() => generateProblem({ types: settings.enabledTypes, level: save.level }))
+  const [initial] = useState(() => {
+    const progress = initialProgress(save)
+    return { progress, problem: createProblem(settings.topics, progress) }
+  })
+  const [progress, setProgress] = useState<ProgressByTopic>(initial.progress)
+  const [problem, setProblem] = useState<Problem>(initial.problem)
+  const [chestStreak, setChestStreak] = useState(0)
+  const [mistakeMade, setMistakeMade] = useState(false)
   const [input, setInput] = useState('')
   const [phase, setPhase] = useState<Phase>('answering')
   const [solved, setSolved] = useState(0)
@@ -61,19 +97,37 @@ export function AcademyScreen({
   const [hintVisible, setHintVisible] = useState(false)
   const [easier, setEasier] = useState(false)
 
+  const stopwatchRef = useRef<ActiveStopwatch | null>(null)
+  stopwatchRef.current ??= new ActiveStopwatch()
+  const stopwatch = stopwatchRef.current
+
   const busy = BUSY_PHASES.includes(phase)
   useEffect(() => {
     onBusyChange(busy)
   }, [busy, onBusyChange])
+
+  // Čas řešení běží jen při otevřené Akademii, viditelné hře a rozdělaném příkladu.
+  const timing = active && (phase === 'answering' || phase === 'wrong')
+  useEffect(() => {
+    const update = () => stopwatch.setRunning(timing && document.visibilityState === 'visible')
+    update()
+    document.addEventListener('visibilitychange', update)
+    return () => {
+      document.removeEventListener('visibilitychange', update)
+      stopwatch.setRunning(false)
+    }
+  }, [timing, stopwatch])
+
+  const allowed = (topic: TopicId) => settings.topics[topic]
 
   function nextProblem() {
     if (lockRequested) {
       setPhase('paused')
       return
     }
-    setProblem((previous) =>
-      generateProblem({ types: settings.enabledTypes, level: difficulty.level, previousKey: previous.key }),
-    )
+    setProblem((previous) => createProblem(settings.topics, progress, previous.key))
+    stopwatch.reset()
+    setMistakeMade(false)
     setInput('')
     setLevelUp(false)
     setHintVisible(false)
@@ -99,35 +153,42 @@ export function AcademyScreen({
 
   function submit(given: number | CompareSign) {
     if (phase !== 'answering' && phase !== 'wrong') return
+    const { topic } = problem
     const correct = isCorrectAnswer(problem, given)
-    const update = updateDifficulty(difficulty, correct, settings)
-    setDifficulty(update.state)
+    const update = updateTopicProgress(progress[topic], correct, allowed(topic))
+    setProgress((current) => ({ ...current, [topic]: update.progress }))
+    const chest = updateChestStreak(chestStreak, correct)
+    setChestStreak(chest.streak)
 
     if (!correct) {
-      onWrong(problem, update.state.level)
+      onWrong(problem, update.progress.tier)
+      setMistakeMade(true)
       setInput('')
       setHintVisible(true)
       setPhase('wrong')
       return
     }
 
-    const amount = onCorrect(problem, update.state.level)
+    const success = isSuccess(topic, !mistakeMade, stopwatch.elapsedMs())
+    const amount = onCorrect(problem, update.progress.tier, success)
     if (settings.soundOn) playCoin()
     setEarned((total) => total + amount)
     setReward({ amount, key: Date.now() })
     setSolved((count) => count + 1)
-    setChestPending(update.streakCompleted)
-    setLevelUp(update.levelChange === 1)
+    setChestPending(chest.chest)
+    setLevelUp(update.tierChange === 1)
     setPraise(PRAISE[Math.floor(Math.random() * PRAISE.length)])
     setPhase('correct')
   }
 
   function skip() {
     if (phase !== 'answering' && phase !== 'wrong') return
-    const update = skipProblem(difficulty, settings)
-    setDifficulty(update.state)
-    onSkip(problem, update.state.level)
-    setEasier(update.levelChange === -1)
+    const { topic } = problem
+    const update = skipTopicProgress(progress[topic], allowed(topic))
+    setProgress((current) => ({ ...current, [topic]: update.progress }))
+    setChestStreak(0)
+    onSkip(problem, update.progress.tier)
+    setEasier(update.tierChange === -1)
     setInput(String(problem.answer))
     setHintVisible(false)
     setPhase('skipped')
@@ -155,10 +216,10 @@ export function AcademyScreen({
     nextProblem()
   }
 
-  const isComparison = problem.type === 'comparison'
+  const isComparison = problem.kind === 'compare'
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-y-auto p-3">
+    <div className="flex h-full flex-col gap-2 overflow-y-auto p-3">
       <header className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-bold text-violet-700">Akademie</h1>
         <div className="flex items-center gap-2">
@@ -191,13 +252,13 @@ export function AcademyScreen({
           Příklad {Math.min(phase === 'correct' || phase === 'chest' || phase === 'summary' ? solved : solved + 1, ROUND_SIZE)} z{' '}
           {ROUND_SIZE}
         </span>
-        <span className="flex items-center gap-1" aria-label={`Správně v řadě: ${difficulty.correctStreak} z ${CORRECT_IN_ROW_TO_LEVEL_UP}`}>
-          {Array.from({ length: CORRECT_IN_ROW_TO_LEVEL_UP }, (_, i) => (
+        <span className="flex items-center gap-1" aria-label={`Správně v řadě: ${chestStreak} z ${CORRECT_IN_ROW_FOR_CHEST}`}>
+          {Array.from({ length: CORRECT_IN_ROW_FOR_CHEST }, (_, i) => (
             <svg key={i} viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
               <path
                 d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"
-                fill={i < difficulty.correctStreak ? '#facc15' : '#ede9fe'}
-                stroke={i < difficulty.correctStreak ? '#ca8a04' : '#c4b5fd'}
+                fill={i < chestStreak ? '#facc15' : '#ede9fe'}
+                stroke={i < chestStreak ? '#ca8a04' : '#c4b5fd'}
                 strokeWidth="1.5"
                 strokeLinejoin="round"
               />
@@ -213,7 +274,7 @@ export function AcademyScreen({
         state={phase === 'correct' ? 'correct' : phase === 'wrong' ? 'wrong' : phase === 'skipped' ? 'revealed' : 'answering'}
       />
 
-      <div className="flex min-h-20 flex-col justify-center rounded-2xl px-3 text-center text-lg" role="status">
+      <div className="flex min-h-14 shrink-0 flex-col justify-center rounded-2xl px-3 text-center text-lg" role="status">
         {phase === 'correct' && (
           <p className="font-bold text-emerald-600">
             {praise} +{reward?.amount} {levelUp && <span className="block text-base text-violet-500">Jdeš na těžší příklady!</span>}
@@ -295,7 +356,7 @@ export function AcademyScreen({
           >
             <TreasureChest open={chestReward !== null} className={`h-32 w-40 ${chestReward === null ? 'animate-wiggle' : ''}`} />
           </button>
-          <p>{chestReward === null ? `${CORRECT_IN_ROW_TO_LEVEL_UP} správně v řadě! Co je uvnitř?` : 'Truhla byla plná zlaťáků.'}</p>
+          <p>{chestReward === null ? `${CORRECT_IN_ROW_FOR_CHEST} správně v řadě! Co je uvnitř?` : 'Truhla byla plná zlaťáků.'}</p>
         </Dialog>
       )}
 

@@ -3,10 +3,11 @@ import { addGold, applyCorrectAnswer, applySkippedProblem, applyWrongAnswer } fr
 import { BADGES, awardBadges, type Badge } from '../lib/badges'
 import { buyItem, rewardForCorrect, type BuyResult } from '../lib/economy'
 import type { Problem } from '../lib/mathGenerator'
-import { hashPin, resetProgress, updateSettings } from '../lib/parent'
+import { acceptRecommendation, hashPin, resetProgress, snoozeRecommendation, updateTopics } from '../lib/parent'
+import type { Recommendation } from '../lib/practice'
 import { loadSave, writeSave } from '../lib/storage'
 import { toggleEquip } from '../lib/wardrobe'
-import type { BadgeId, Level, SaveData, Settings } from '../types'
+import type { BadgeId, SaveData, Tier, TopicSettings } from '../types'
 
 export function useGameState() {
   const [save, setSave] = useState<SaveData>(() => awardBadges(loadSave()).save)
@@ -40,18 +41,18 @@ export function useGameState() {
     [save],
   )
 
-  const answerCorrect = useCallback((problem: Problem, nextLevel: Level): number => {
-    setSave((current) => awardBadges(applyCorrectAnswer(current, problem, nextLevel).save).save)
-    return rewardForCorrect(problem.level)
+  const answerCorrect = useCallback((problem: Problem, nextTier: Tier, success: boolean): number => {
+    setSave((current) => awardBadges(applyCorrectAnswer(current, problem, nextTier, success).save).save)
+    return rewardForCorrect(problem.tier)
   }, [])
 
   const answerWrong = useCallback(
-    (problem: Problem, nextLevel: Level) => setSave((current) => applyWrongAnswer(current, problem, nextLevel)),
+    (problem: Problem, nextTier: Tier) => setSave((current) => applyWrongAnswer(current, problem, nextTier)),
     [],
   )
 
   const skipProblem = useCallback(
-    (problem: Problem, nextLevel: Level) => setSave((current) => applySkippedProblem(current, problem, nextLevel)),
+    (problem: Problem, nextTier: Tier) => setSave((current) => applySkippedProblem(current, problem, nextTier)),
     [],
   )
 
@@ -64,8 +65,15 @@ export function useGameState() {
 
   const setPin = useCallback((pin: string) => setSave((current) => ({ ...current, parentPinHash: hashPin(pin) })), [])
 
-  const changeSettings = useCallback(
-    (settings: Settings) => setSave((current) => updateSettings(current, settings)),
+  const changeTopics = useCallback((topics: TopicSettings) => setSave((current) => updateTopics(current, topics)), [])
+
+  const acceptAdvice = useCallback(
+    (recommendation: Recommendation) => setSave((current) => acceptRecommendation(current, recommendation)),
+    [],
+  )
+
+  const snoozeAdvice = useCallback(
+    (recommendation: Recommendation) => setSave((current) => snoozeRecommendation(current, recommendation)),
     [],
   )
 
@@ -92,7 +100,9 @@ export function useGameState() {
     receiveGold,
     setSoundOn,
     setPin,
-    changeSettings,
+    changeTopics,
+    acceptAdvice,
+    snoozeAdvice,
     replaceSave,
     reset,
   }
