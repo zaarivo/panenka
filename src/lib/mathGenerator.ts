@@ -1,5 +1,7 @@
 import type { Rng, Tier, TopicId } from '../types'
 import { EQUATION_RULES, MINUS, TIMES, generateEquation, pick, randInt, type AddSubRule, type Equation } from './equations'
+import { buildClockTask, timeAnswer } from './clock'
+import { buildMoneyTask } from './money'
 import { generateWordProblem } from './wordProblems'
 
 export { MINUS, TIMES }
@@ -15,12 +17,20 @@ interface ProblemBase {
   key: string
   /** Text slovní úlohy. */
   story?: string
+  /** Štítky cen u úloh na peníze, např. „🎀 4 Kč“. */
+  tags?: string[]
+  /** Ručičkové hodiny, které má dítě přečíst. */
+  clock?: { hours: number; minutes: number }
+  /** Jednotka za okénkem odpovědi. */
+  unit?: 'Kč'
 }
 
 export type NumberProblem = ProblemBase & { kind: 'number'; answer: number }
 export type ComparisonProblem = ProblemBase & { kind: 'compare'; answer: CompareSign }
-export type Problem = NumberProblem | ComparisonProblem
-export type ProblemDraft = Omit<NumberProblem, 'key'> | Omit<ComparisonProblem, 'key'>
+/** Čas jako číslo bez dvojtečky: 4:45 → 445 (dítě píše číslice, dvojtečka se jen zobrazí). */
+export type TimeProblem = ProblemBase & { kind: 'time'; answer: number }
+export type Problem = NumberProblem | ComparisonProblem | TimeProblem
+export type ProblemDraft = Omit<NumberProblem, 'key'> | Omit<ComparisonProblem, 'key'> | Omit<TimeProblem, 'key'>
 
 export const MULTIPLICATION_ROWS: Record<Tier, readonly number[]> = {
   easy: [2, 5, 10],
@@ -152,6 +162,19 @@ function buildComparison(rng: Rng, tier: Tier): ProblemDraft {
   }
 }
 
+function buildMoney(rng: Rng, tier: Tier): ProblemDraft {
+  const { story, tags, answer, hint } = buildMoneyTask(tier, rng)
+  return { kind: 'number', topic: 'money', tier, prompt: '?', story, tags, unit: 'Kč', answer, hint }
+}
+
+function buildClock(rng: Rng, tier: Tier): ProblemDraft {
+  const { hours, minutes, mode, words, hint } = buildClockTask(tier, rng)
+  const base = { kind: 'time' as const, topic: 'clock' as const, tier, answer: timeAnswer(hours, minutes), hint }
+  return mode === 'face'
+    ? { ...base, story: 'Kolik je hodin?', prompt: '?', clock: { hours, minutes } }
+    : { ...base, story: 'Kolik je to na digitálních hodinách?', prompt: `${words} = ?` }
+}
+
 const BUILDERS: Record<TopicId, (rng: Rng, tier: Tier) => ProblemDraft> = {
   add20: buildAddSub('add20'),
   add100: buildAddSub('add100'),
@@ -159,6 +182,8 @@ const BUILDERS: Record<TopicId, (rng: Rng, tier: Tier) => ProblemDraft> = {
   missingNumber: buildMissingNumber,
   comparison: buildComparison,
   wordProblems: (rng, tier) => generateWordProblem(tier, rng),
+  money: buildMoney,
+  clock: buildClock,
 }
 
 export function pickTopic(enabled: readonly TopicId[], rng: Rng = Math.random): TopicId {
@@ -177,11 +202,19 @@ export function generateProblem({ topic, tier, previousKey, rng = Math.random }:
   let problem: Problem
   do {
     const draft = BUILDERS[topic](rng, tier)
-    problem = { ...draft, key: `${topic}|${draft.story ?? ''}|${draft.prompt}` } as Problem
+    const clock = draft.clock ? `${draft.clock.hours}:${draft.clock.minutes}` : ''
+    problem = { ...draft, key: `${topic}|${draft.story ?? ''}|${draft.prompt}|${clock}` } as Problem
   } while (problem.key === previousKey)
   return problem
 }
 
 export function isCorrectAnswer(problem: Problem, given: number | CompareSign): boolean {
   return problem.answer === given
+}
+
+/** Správná odpověď, jak ji ukázat dítěti: „4:45“, „26 Kč“, „12“, „<“. */
+export function formatAnswer(problem: Problem): string {
+  if (problem.kind === 'time') return `${Math.floor(problem.answer / 100)}:${String(problem.answer % 100).padStart(2, '0')}`
+  if (problem.kind === 'number' && problem.unit) return `${problem.answer} ${problem.unit}`
+  return String(problem.answer)
 }

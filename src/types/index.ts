@@ -17,7 +17,7 @@ export const BADGE_IDS = ['first-step', 'times-table-star', 'diligent-pupil', 'c
 export type BadgeId = (typeof BADGE_IDS)[number]
 
 /** Kategorie úloh („topic“ — `Category` už znamená druh oblečení). */
-export const TOPIC_IDS = ['add20', 'add100', 'multiplication', 'missingNumber', 'comparison', 'wordProblems'] as const
+export const TOPIC_IDS = ['add20', 'add100', 'multiplication', 'missingNumber', 'comparison', 'wordProblems', 'money', 'clock'] as const
 export type TopicId = (typeof TOPIC_IDS)[number]
 
 export const TIERS = ['easy', 'medium', 'hard'] as const

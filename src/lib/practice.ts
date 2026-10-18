@@ -13,6 +13,8 @@ export const TIME_LIMIT_MS: Record<TopicId, number> = {
   missingNumber: 30_000,
   comparison: 30_000,
   wordProblems: 90_000,
+  money: 60_000,
+  clock: 60_000,
 }
 
 /** Úspěch = správně napoprvé a v časovém limitu. Dítě o tom neví. */

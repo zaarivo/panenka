@@ -17,7 +17,7 @@ import {
 import { ROYAL_TARGET } from './badges'
 import { clampTier } from './difficulty'
 import { RECENT_WINDOW } from './practice'
-import { allTiersOn, sortTiers } from './topics'
+import { defaultTopics, sortTiers } from './topics'
 import { equipSlot } from './wardrobe'
 
 export const SAVE_KEY = 'panenka_save'
@@ -44,7 +44,7 @@ function lowestTiers(topics: TopicSettings): Record<TopicId, Tier> {
 export function createDefaultSave(): SaveData {
   const equipped: Equipped = {}
   for (const item of STARTER_ITEMS) equipped[equipSlot(item)] = item.id
-  const topics = allTiersOn()
+  const topics = defaultTopics()
   return {
     saveVersion: SAVE_VERSION,
     gold: 0,
@@ -143,7 +143,7 @@ function parseV2Topics(settings: Record<string, unknown>): TopicSettings | null 
       return [topic, Array.isArray(tiers) ? sortTiers(tiers.filter(isTier)) : []]
     }),
   ) as TopicSettings
-  return TOPIC_IDS.some((topic) => parsed[topic].length > 0) ? parsed : allTiersOn()
+  return TOPIC_IDS.some((topic) => parsed[topic].length > 0) ? parsed : defaultTopics()
 }
 
 function parsePracticeRecord(value: unknown): PracticeRecord | null {

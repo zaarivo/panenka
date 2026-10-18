@@ -3,6 +3,7 @@ import { addCrossesTen, subCrossesTen } from '../lib/equations'
 import {
   MULTIPLICATION_ROWS,
   addHint,
+  formatAnswer,
   generateProblem,
   isCorrectAnswer,
   multiplicationHint,
@@ -163,6 +164,55 @@ describe('výběr příkladů', () => {
     const problem = generateProblem({ topic: 'add20', tier: 'medium', rng: seededRng(5) })
     expect(isCorrectAnswer(problem, problem.answer)).toBe(true)
     expect(isCorrectAnswer(problem, (problem.answer as number) + 1)).toBe(false)
+  })
+})
+
+describe('peníze a hodiny', () => {
+  test('peníze a hodiny se generují pro všechny obtížnosti', () => {
+    for (const tier of TIERS) {
+      const money = generateProblem({ topic: 'money', tier, rng: seededRng(2) })
+      expect(money).toMatchObject({ kind: 'number', topic: 'money', tier, prompt: '?', unit: 'Kč' })
+      expect(money.tags!.length).toBeGreaterThanOrEqual(2)
+      const clock = generateProblem({ topic: 'clock', tier, rng: seededRng(2) })
+      expect(clock).toMatchObject({ kind: 'time', topic: 'clock', tier })
+    }
+  })
+
+  test('ciferník a čas slovy mají správné zadání', () => {
+    const problems = generateMany('clock', 'medium', 4)
+    const face = problems.find((p) => p.clock)!
+    expect(face).toMatchObject({ story: 'Kolik je hodin?', prompt: '?' })
+    expect(face.answer).toBe(face.clock!.hours * 100 + face.clock!.minutes)
+    const words = problems.find((p) => !p.clock)!
+    expect(words.story).toBe('Kolik je to na digitálních hodinách?')
+    expect(words.prompt).toMatch(/ = \?$/)
+  })
+
+  test('stejný ciferník nepřijde dvakrát po sobě', () => {
+    const problems = generateMany('clock', 'hard', 9)
+    for (let i = 1; i < problems.length; i++) {
+      const [a, b] = [problems[i - 1].clock!, problems[i].clock!]
+      expect(a.hours === b.hours && a.minutes === b.minutes).toBe(false)
+    }
+  })
+
+  test('odpověď času s nulou v minutách', () => {
+    const problem = generateMany('clock', 'hard', 3).find((p) => p.answer === 105)!
+    expect(problem.clock).toEqual({ hours: 1, minutes: 5 })
+    expect(isCorrectAnswer(problem, Number('105'))).toBe(true)
+    expect(isCorrectAnswer(problem, Number('475'))).toBe(false)
+  })
+
+  test('formatAnswer', () => {
+    const clock = generateProblem({ topic: 'clock', tier: 'hard', rng: seededRng(1) })
+    expect(formatAnswer({ ...clock, kind: 'time', answer: 445 } as Problem)).toBe('4:45')
+    expect(formatAnswer({ ...clock, kind: 'time', answer: 1230 } as Problem)).toBe('12:30')
+    const money = generateProblem({ topic: 'money', tier: 'easy', rng: seededRng(1) })
+    expect(formatAnswer({ ...money, kind: 'number', answer: 26 } as Problem)).toBe('26 Kč')
+    const add = generateProblem({ topic: 'add20', tier: 'easy', rng: seededRng(1) })
+    expect(formatAnswer({ ...add, kind: 'number', answer: 12 } as Problem)).toBe('12')
+    const compare = generateProblem({ topic: 'comparison', tier: 'easy', rng: seededRng(1) })
+    expect(formatAnswer({ ...compare, kind: 'compare', answer: '<' } as Problem)).toBe('<')
   })
 })
 

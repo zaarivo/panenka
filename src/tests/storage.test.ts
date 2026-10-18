@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { CORRUPT_BACKUP_KEY, SAVE_KEY, createDefaultSave, loadSave, migrateTopicsFromV1, parseSave, writeSave } from '../lib/storage'
 import { importProgress } from '../lib/parent'
-import { allTiersOn } from '../lib/topics'
+import { defaultTopics } from '../lib/topics'
 
 function memoryStorage(initial: Record<string, string> = {}): Storage {
   const map = new Map(Object.entries(initial))
@@ -106,10 +106,10 @@ describe('čištění dat', () => {
     expect(parseSave({ ...base, settings: { ...base.settings, topics: rest } })!.settings.topics.wordProblems).toEqual([])
   })
 
-  test('žádná zaškrtnutá obtížnost nikde → vše zaškrtnuté', () => {
+  test('žádná zaškrtnutá obtížnost nikde → výchozí stav', () => {
     const base = createDefaultSave()
     const empty = Object.fromEntries(Object.keys(base.settings.topics).map((k) => [k, []]))
-    expect(parseSave({ ...base, settings: { ...base.settings, topics: empty } })!.settings.topics).toEqual(allTiersOn())
+    expect(parseSave({ ...base, settings: { ...base.settings, topics: empty } })!.settings.topics).toEqual(defaultTopics())
   })
 
   test('aktuální obtížnost srovná do zaškrtnutých', () => {
@@ -164,7 +164,7 @@ describe('převod z verze 1', () => {
     expect(save.owned).not.toContain('acc-crown')
     expect(save.equipped).toEqual({ hair: 'hair-ponytail-brown', dress: 'dress-pink', shoes: 'shoes-sneakers-white' })
     expect(save.badges).toEqual(['first-step', 'times-table-star'])
-    expect(save.stats).toEqual({ totalCorrect: 37, multiplicationStreak: 12, correctByTopic: { add20: 0, add100: 0, multiplication: 0, missingNumber: 0, comparison: 0, wordProblems: 0 } })
+    expect(save.stats).toEqual({ totalCorrect: 37, multiplicationStreak: 12, correctByTopic: { add20: 0, add100: 0, multiplication: 0, missingNumber: 0, comparison: 0, wordProblems: 0, money: 0, clock: 0 } })
     expect(save.medals).toEqual([])
     expect(save.parentPinHash).toBe('fnv1a:39e21db5')
     expect(save.settings.soundOn).toBe(false)
@@ -175,6 +175,8 @@ describe('převod z verze 1', () => {
       missingNumber: ['medium', 'hard'],
       comparison: ['medium', 'hard'],
       wordProblems: [],
+      money: [],
+      clock: [],
     })
     expect(save.currentTier).toEqual({
       add20: 'hard',
@@ -183,6 +185,8 @@ describe('převod z verze 1', () => {
       missingNumber: 'medium',
       comparison: 'medium',
       wordProblems: 'easy',
+      money: 'easy',
+      clock: 'easy',
     })
     expect(save.practice).toEqual({})
   })
@@ -195,6 +199,8 @@ describe('převod z verze 1', () => {
       missingNumber: [],
       comparison: [],
       wordProblems: [],
+      money: [],
+      clock: [],
     })
   })
 
@@ -286,7 +292,7 @@ describe('verze 4: medaile a Zlatá korunka', () => {
     expect(save.saveVersion).toBe(4)
     expect(save.owned).not.toContain('acc-crown')
     expect(save.equipped['accessory:head']).toBeUndefined()
-    expect(save.stats.correctByTopic).toEqual({ add20: 0, add100: 0, multiplication: 0, missingNumber: 0, comparison: 0, wordProblems: 0 })
+    expect(save.stats.correctByTopic).toEqual({ add20: 0, add100: 0, multiplication: 0, missingNumber: 0, comparison: 0, wordProblems: 0, money: 0, clock: 0 })
     expect(save.medals).toEqual([])
   })
 
@@ -309,7 +315,7 @@ describe('verze 4: medaile a Zlatá korunka', () => {
     }
     const save = parseSave(raw)!
     expect(save.medals).toEqual(['add20:bronze'])
-    expect(save.stats.correctByTopic).toEqual({ add20: 12, add100: 0, multiplication: 0, missingNumber: 0, comparison: 0, wordProblems: 0 })
+    expect(save.stats.correctByTopic).toEqual({ add20: 12, add100: 0, multiplication: 0, missingNumber: 0, comparison: 0, wordProblems: 0, money: 0, clock: 0 })
   })
 
   test('v4 se zapíše a načte beze změny', () => {
@@ -327,5 +333,26 @@ describe('verze 4: medaile a Zlatá korunka', () => {
     const imported = importProgress(createDefaultSave(), JSON.stringify(crownedV3(150)))!
     expect(imported.owned).not.toContain('acc-crown')
     expect(imported.equipped['accessory:head']).toBeUndefined()
+  })
+})
+
+describe('peníze a hodiny v uložení', () => {
+  test('nová hra má peníze a hodiny vypnuté', () => {
+    const { topics } = createDefaultSave().settings
+    expect(topics.money).toEqual([])
+    expect(topics.clock).toEqual([])
+    expect(topics.add20).toEqual(['easy', 'medium', 'hard'])
+  })
+
+  test('uložení bez peněz a hodin: vypnuté, počty 0', () => {
+    const base = createDefaultSave()
+    const { money: _m, clock: _c, ...topics } = { ...base.settings.topics, add20: ['easy' as const] }
+    const { money: _tm, clock: _tc, ...currentTier } = base.currentTier
+    const { money: _cm, clock: _cc, ...correctByTopic } = base.stats.correctByTopic
+    const save = parseSave({ ...base, settings: { ...base.settings, topics }, currentTier, stats: { ...base.stats, correctByTopic } })!
+    expect(save.settings.topics.money).toEqual([])
+    expect(save.settings.topics.clock).toEqual([])
+    expect(save.stats.correctByTopic.clock).toBe(0)
+    expect(save.currentTier.money).toBe('easy')
   })
 })

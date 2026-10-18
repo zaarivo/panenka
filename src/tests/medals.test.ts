@@ -10,7 +10,7 @@ const withCount = (topic: TopicId, count: number, medals: MedalId[] = []) => {
 
 describe('medaile', () => {
   test('18 medailí v pořadí kategorií', () => {
-    expect(MEDALS).toHaveLength(18)
+    expect(MEDALS).toHaveLength(24)
     expect(MEDALS.slice(0, 4).map((m) => m.id)).toEqual(['add20:bronze', 'add20:silver', 'add20:gold', 'add100:bronze'])
     expect(MEDALS.slice(0, 3).map((m) => m.target)).toEqual([10, 100, 200])
   })

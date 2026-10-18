@@ -18,6 +18,8 @@ const topics = (partial: Partial<TopicSettings>): TopicSettings => ({
   missingNumber: [],
   comparison: [],
   wordProblems: [],
+  money: [],
+  clock: [],
   ...partial,
 })
 
@@ -43,6 +45,10 @@ describe('úspěch', () => {
     expect(TIME_LIMIT_MS.wordProblems).toBe(90_000)
     expect(TIME_LIMIT_MS.multiplication).toBe(30_000)
     expect(isSuccess('wordProblems', true, 89_000)).toBe(true)
+    expect(isSuccess('money', true, 60_000)).toBe(true)
+    expect(isSuccess('money', true, 60_001)).toBe(false)
+    expect(isSuccess('clock', true, 60_000)).toBe(true)
+    expect(isSuccess('clock', true, 60_001)).toBe(false)
     expect(isSuccess('wordProblems', true, 90_001)).toBe(false)
   })
 })

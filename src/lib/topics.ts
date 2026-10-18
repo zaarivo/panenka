@@ -7,7 +7,12 @@ export const TOPIC_LABELS: Record<TopicId, string> = {
   missingNumber: 'Chybějící číslo',
   comparison: 'Porovnávání',
   wordProblems: 'Slovní úlohy',
+  money: 'Peníze',
+  clock: 'Hodiny',
 }
+
+/** Kategorie, které jsou po instalaci (a v uložení, kde chybí) vypnuté, dokud je rodič nezapne. */
+const OFF_BY_DEFAULT: readonly TopicId[] = ['money', 'clock']
 
 export const TIER_LABELS: Record<Tier, string> = { easy: 'lehké', medium: 'střední', hard: 'těžké' }
 
@@ -15,8 +20,9 @@ export function practiceKey(topic: TopicId, tier: Tier): PracticeKey {
   return `${topic}:${tier}`
 }
 
-export function allTiersOn(): TopicSettings {
-  return Object.fromEntries(TOPIC_IDS.map((topic) => [topic, [...TIERS]])) as TopicSettings
+/** Výchozí nastavení: všechny obtížnosti zaškrtnuté, jen peníze a hodiny vypnuté. */
+export function defaultTopics(): TopicSettings {
+  return Object.fromEntries(TOPIC_IDS.map((topic) => [topic, OFF_BY_DEFAULT.includes(topic) ? [] : [...TIERS]])) as TopicSettings
 }
 
 export function sortTiers(tiers: readonly Tier[]): Tier[] {

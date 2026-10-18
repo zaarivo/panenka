@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { TIER_LABELS, TOPIC_LABELS, allTiersOn, enabledTopics, practiceKey, sortTiers, toggleTier } from '../lib/topics'
+import { TIER_LABELS, TOPIC_LABELS, defaultTopics, enabledTopics, practiceKey, sortTiers, toggleTier } from '../lib/topics'
 import { TOPIC_IDS, type TopicSettings } from '../types'
 
 const only = (partial: Partial<TopicSettings>): TopicSettings => ({
@@ -9,6 +9,8 @@ const only = (partial: Partial<TopicSettings>): TopicSettings => ({
   missingNumber: [],
   comparison: [],
   wordProblems: [],
+  money: [],
+  clock: [],
   ...partial,
 })
 
@@ -20,14 +22,18 @@ describe('kategorie úloh', () => {
   test('každá kategorie má název', () => {
     for (const topic of TOPIC_IDS) expect(TOPIC_LABELS[topic].length).toBeGreaterThan(0)
     expect(TOPIC_LABELS.wordProblems).toBe('Slovní úlohy')
+    expect(TOPIC_LABELS.money).toBe('Peníze')
+    expect(TOPIC_LABELS.clock).toBe('Hodiny')
   })
 
   test('klíč úspěšnosti spojuje kategorii a obtížnost', () => {
     expect(practiceKey('multiplication', 'easy')).toBe('multiplication:easy')
   })
 
-  test('výchozí stav má všechno zaškrtnuté', () => {
-    for (const topic of TOPIC_IDS) expect(allTiersOn()[topic]).toEqual(['easy', 'medium', 'hard'])
+  test('výchozí stav: peníze a hodiny vypnuté, ostatní vše zaškrtnuté', () => {
+    for (const topic of TOPIC_IDS) {
+      expect(defaultTopics()[topic]).toEqual(topic === 'money' || topic === 'clock' ? [] : ['easy', 'medium', 'hard'])
+    }
   })
 
   test('řazení obtížností od lehké po těžkou', () => {
