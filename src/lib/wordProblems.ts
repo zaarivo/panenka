@@ -64,7 +64,7 @@ export const WORD_TEMPLATES: Record<Tier, readonly WordTemplate[]> = {
   hard: MULTIPLY,
 }
 
-const NAMES = ['Ema', 'Anička', 'Klárka', 'Terka', 'Bára'] as const
+export const NAMES = ['Ema', 'Anička', 'Klárka', 'Terka', 'Bára'] as const
 
 function operands(tier: Tier, rng: Rng): { a: number; b: number; op: WordTemplate['op']; result: number } {
   if (tier === 'hard') {
