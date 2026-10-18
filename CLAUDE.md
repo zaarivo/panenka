@@ -26,7 +26,8 @@ vydělané řešením matematických příkladů.
 
 ## Stav a uložení
 
-- `localStorage` s klíčem `panenka_save`, verze je uvnitř dat (`saveVersion: 1`)
+- `localStorage` s klíčem `panenka_save`, verze je uvnitř dat (`saveVersion: 2`); verze 1 (typy + stupně
+  1–4) se při načtení i importu převede (`migrateTopicsFromV1`), postup a PIN zůstanou
 - Veškeré čtení/zápis v `try/catch`; při poškozených datech výchozí stav (bez pádu)
   a původní text se schová pod `panenka_save_corrupt` pro ruční záchranu
 - `parseSave()` validuje a čistí data (neznámé kousky/odznaky zahodí, startovní kousky doplní,
@@ -73,11 +74,10 @@ vydělané řešením matematických příkladů.
 ### 3. Matematická akademie
 - Generátor příkladů kódem (ne pevný seznam), výsledky počítá kód, vždy ≥ 0
 - Bez opakování stejného příkladu po sobě
-- Typy: sčítání/odčítání do 20 a do 100 (přes desítku), násobilka po řadách,
-  chybějící číslo (7 + ? = 15), porovnávání (<, >, =)
-- Adaptivní obtížnost: po 5 správných v řadě → o stupeň těžší; po 2 chybách v řadě → o stupeň lehčí
-  (v mezích nastavených rodičem)
-- Odměna: +10 zlaťáků (lehčí), +15 (těžší stupeň)
+- 6 kategorií úloh, každá s obtížnostmi lehké / střední / těžké (viz tabulka níže, včetně slovních úloh)
+- Adaptivní obtížnost zvlášť pro každou kategorii: po 5 správných v řadě → těžší, po 2 chybách → lehčí,
+  jen mezi obtížnostmi, které rodič zaškrtl
+- Odměna: +10 zlaťáků (lehké, střední), +15 (těžké)
 - Chyba: nápověda podle typu (rozklad přes desítku, násobilka jako opakované sčítání), další pokus
 - Vlastní velká číselná klávesnice (ne systémová)
 - Po 5 správných v řadě: bonusová truhla, náhodná odměna 20–40 zlaťáků
@@ -91,25 +91,38 @@ vydělané řešením matematických příkladů.
 - Porovnávání se odpovídá třemi velkými tlačítky `<` `=` `>`, ostatní typy vlastní klávesnicí (max 3 číslice).
 - Přepínač zvuku je v hlavičce Akademie (`settings.soundOn`). Zvuky: `lib/sound.ts` (Web Audio).
 - Akademie zůstává v DOM i při jiné záložce, aby se rozdělané kolo neztratilo.
-- Řady (správně/chyby) se drží jen v rámci sezení; stupeň a statistiky se ukládají.
+- Řady (správně/chyby) se drží jen v rámci sezení; aktuální obtížnost kategorií a statistiky se ukládají.
 
-#### Stupně obtížnosti (schváleno)
-| Stupeň | Sčítání/odčítání, chybějící číslo, porovnávání | Násobilka (řady) |
-|---|---|---|
-| 1 | do 20 bez přechodu přes desítku | 2, 5, 10 |
-| 2 | do 20 s přechodem | + 3, 4 |
-| 3 | do 100 bez přechodu | + 6, 7 |
-| 4 | do 100 s přechodem | + 8, 9 |
+#### Kategorie a obtížnosti (schváleno, návrh `docs/superpowers/specs/2026-10-18-kategorie-uloh-design.md`)
+| Kategorie (`TopicId`) | Lehké | Střední | Těžké |
+|---|---|---|---|
+| Sčítání a odčítání do 20 (`add20`) | vše do 10 | do 20 bez přechodu | do 20 s přechodem |
+| Sčítání a odčítání do 100 (`add100`) | celé desítky | bez přechodu | s přechodem |
+| Malá násobilka (`multiplication`) | řady 2, 5, 10 | 2, 3, 4, 5, 10 | 2–10 |
+| Chybějící číslo (`missingNumber`) | do 10 | do 20 | do 100 |
+| Porovnávání (`comparison`) | do 10 | do 20 | do 100 |
+| Slovní úlohy (`wordProblems`) | ± do 20 | ± do 100 | násobilka |
 
+- V kódu `topic` (ne `category` — to je druh oblečení), obtížnosti `easy/medium/hard`, v UI slovy.
+- Zaškrtnutí smí mít mezery (lehké + těžké); posun skočí na nejbližší zaškrtnutou (`stepTier`).
+- Truhla je společná: 5 správně v řadě napříč kategoriemi (`updateChestStreak`).
 - Přechod: sčítání = jednotky dají víc než 10; odčítání = jednotky menšence nestačí.
 - Násobilka: činitel 1–10, zápis `k × řada` (schváleno „×“ místo „·“; minus jako „−“).
-- Odměna 10 zlaťáků na stupních 1–2, 15 na stupních 3–4 (podle stupně, na kterém příklad vznikl).
 - Chybějící číslo skrývá první nebo druhý člen; porovnávání = výraz vs. číslo, ~1/3 rovnost.
-- Každý pokus se počítá: chyba nuluje řadu správných, správná odpověď nuluje řadu chyb.
-  Po povýšení/snížení se řada nuluje. Truhla po každých 5 správných v řadě i na maximálním stupni.
+- Slovní úlohy: šablony v `lib/wordProblems.ts` (téma hry, skloňování ve 4. pádě), nápověda
+  „Spočítej a op b.“, text úlohy v `problem.story`, odpověď do okénka pod textem.
 - Nápověda nikdy neukazuje výsledek posledního kroku („8 + 2 = 10, a ještě + 5.“).
-- Kód: `lib/mathGenerator.ts` (příklady, nápovědy), `lib/difficulty.ts` (adaptivita),
-  `lib/economy.ts` (odměny, truhla, nákup). Testy používají deterministické RNG.
+- Kód: `lib/equations.ts` (rovnice), `lib/mathGenerator.ts` (příklady, nápovědy),
+  `lib/difficulty.ts` (obtížnost kategorií, truhla), `lib/economy.ts`, `lib/topics.ts`.
+  Testy používají deterministické RNG.
+
+#### Úspěšnost a doporučení pro rodiče (schváleno)
+- Úspěch = správně napoprvé a v limitu (30 s, slovní úlohy 90 s); čas jen při otevřené Akademii
+  a viditelné hře (`ActiveStopwatch`). Dítě o tom neví — zlaťáky i pochvala beze změny.
+- Pro každou kategorii × obtížnost posledních 20 výsledků (`save.practice`), doporučení od 10.
+- ≥ 95 %: na nejtěžší zaškrtnuté nabídne přidat těžší, jinak odebrat tuto; < 25 %: odebrat tuto,
+  nebo (je-li jediná) přidat lehčí. Nejvýš jedno na kategorii. „Teď ne“ = znovu po 20 výsledcích.
+- Odškrtnutím obtížnosti se smaže její historie. Logika `lib/practice.ts`, UI `PracticePicker`.
 
 ### 4. Síň slávy
 - Odznaky za úspěchy; některé odemykají nekoupitelné kousky
@@ -127,7 +140,7 @@ vydělané řešením matematických příkladů.
 
 - Ikona ozubeného kola (malá, nenápadná)
 - PIN nastavení při prvním spuštění (žádný výchozí PIN)
-- Volba povolených typů příkladů a rozsahu obtížnosti (zaškrtávátka)
+- Editor kategorií a obtížností (stejný jako v Kroku 1) s úspěšností u každé obtížnosti
 - Export/import postupu jako JSON (s validací při importu)
 - Reset hry s potvrzením
 
@@ -136,20 +149,22 @@ vydělané řešením matematických příkladů.
   není nastaven, hra se neukáže. Ozubené kolečko je v hlavičce Síně slávy.
 - PIN je jen dětský zámek: ukládá se jako otisk FNV-1a (`hashPin`), ne jako text. Funguje i bez
   HTTPS (test na telefonu v síti). Zapomenutý PIN = smazat data stránky v prohlížeči.
-- Obtížnost: zaškrtávátka stupňů 1–4 tvoří vždy souvislý rozsah (`toggleLevelRange`).
-- Reset smaže postup (zlaťáky, oblečení, odznaky, statistiky, stupeň), PIN a nastavení zůstanou.
+- Poslední zaškrtnutou obtížnost v celé hře nejde odškrtnout (`toggleTier`).
+- Reset smaže postup (zlaťáky, oblečení, odznaky, statistiky, úspěšnost, obtížnosti kategorií),
+  PIN a zaškrtnuté kategorie zůstanou.
 - Export = JSON celého stavu `panenka-postup-RRRR-MM-DD.json`. Import: max 100 kB, validace přes
   `parseSave`, potvrzení s přehledem; když záloha nemá PIN, zůstane současný. Odznaky z importu
   se neoslavují.
-- Změna typů/obtížnosti, reset i import začnou v Akademii nové kolo (React `key`).
+- Změna kategorií, reset i import začnou v Akademii nové kolo (React `key`).
 - Logika: `lib/parent.ts`, UI: `components/parent/`.
 
 ## Časový zámek (schváleno po MVP)
 
 - Při každém zapnutí hra chce PIN, pokud neběží odemknutí: buď odpočet z minula (přežije
   zavření), nebo „Bez omezení“ v tomto spuštění (sessionStorage, platí do zavření hry).
-- Po PINu výběr času: předvolby 10/15/20/30 min (výchozí 15), vlastní čas po 5 min (5–120),
-  „Bez omezení“. Při prvním spuštění se výběr ukáže hned po nastavení PINu.
+- Po PINu Krok 1 ze 2 „Co dnes procvičíme?“ (doporučení + editor kategorií, „Dál“), pak Krok 2 ze 2
+  „Jak dlouho dnes?“: předvolby 10/15/20/30 min (výchozí 15), vlastní čas po 5 min (5–120),
+  „Bez omezení“, tlačítko „Zpět“. Při prvním spuštění oba kroky hned po nastavení PINu.
 - Odpočet nahoře na všech obrazovkách (`TimerBar`), běží podle hodin i při zavřené hře.
   Poslední minutu „Ještě minutka!“. U „Bez omezení“ se neukazuje.
 - Konec času: v Akademii se rozdělaný příklad (vč. pochvaly, truhly, ukázaného řešení) dokončí,
@@ -163,8 +178,9 @@ vydělané řešením matematických příkladů.
 ## Přeskočení příkladu (schváleno po MVP)
 
 - U každého příkladu tlačítko „Je to moc těžké, přeskočit“: ukáže správný výsledek
-  („Nevadí! Správně je X.“) a „Další příklad“. Bez zlaťáků, nepočítá se do kola ani do
-  statistik, vynuluje řadu hvězdiček i řadu násobilky, stupeň o jeden níž (v mezích rodiče).
+  („Nevadí! Správně je X.“) a „Další příklad“. Bez zlaťáků, nepočítá se do kola ani do správných
+  odpovědí, v úspěšnosti pro rodiče se zapíše jako neúspěch, vynuluje řadu hvězdiček i řadu
+  násobilky, obtížnost kategorie o jednu níž (jen mezi zaškrtnutými).
 
 ## UI
 
