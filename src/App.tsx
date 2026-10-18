@@ -12,11 +12,14 @@ import { AcademyScreen } from './components/screens/AcademyScreen'
 import { HallOfFameScreen } from './components/screens/HallOfFameScreen'
 import { ShopScreen } from './components/screens/ShopScreen'
 import { WardrobeScreen } from './components/screens/WardrobeScreen'
+import { Dialog } from './components/ui/Dialog'
 import { useGameState } from './hooks/useGameState'
 import { usePlayTime, type TimeChoice } from './hooks/usePlayTime'
+import { celebrationKey } from './lib/celebrations'
 import type { Problem } from './lib/mathGenerator'
+import { MEDAL_NAMES } from './lib/medals'
 import { verifyPin } from './lib/parent'
-import { toggleTier } from './lib/topics'
+import { TOPIC_LABELS, toggleTier } from './lib/topics'
 import type { Tier } from './types'
 
 export default function App() {
@@ -127,17 +130,29 @@ export default function App() {
             onGoToShop={() => setTab('shop')}
             lockRequested={playTime.expired}
             onBusyChange={setAcademyBusy}
-            active={tab === 'academy' && parent === 'closed'}
+            active={tab === 'academy' && parent === 'closed' && !celebration}
           />
         </div>
         {tab === 'fame' && <HallOfFameScreen save={save} onOpenParent={() => setParent('gate')} />}
       </main>
       <Navigation active={tab} onChange={setTab} />
 
-      {celebration && parent === 'closed' && (
+      {celebration?.kind === 'medal' && parent === 'closed' && (
+        <Dialog
+          key={celebrationKey(celebration)}
+          title={`${MEDAL_NAMES[celebration.medal.tier]}!`}
+          onClose={game.dismissCelebration}
+          actions={[{ label: 'Hurá!', onClick: game.dismissCelebration, primary: true }]}
+        >
+          <p>
+            {TOPIC_LABELS[celebration.medal.topic]} · {celebration.medal.target} příkladů správně
+          </p>
+        </Dialog>
+      )}
+      {celebration?.kind === 'badge' && parent === 'closed' && (
         <BadgeCelebration
-          key={celebration.id}
-          badge={celebration}
+          key={celebrationKey(celebration)}
+          badge={celebration.badge}
           soundOn={settings.soundOn}
           onClose={game.dismissCelebration}
           onShowWardrobe={() => setTab('wardrobe')}
