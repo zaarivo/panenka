@@ -60,6 +60,16 @@ body,
   height: 100%;
 }
 
+/* Výška podle skutečně viditelné plochy: v prohlížečích s lištou přes stránku (např. Seznam.cz)
+   by jinak spodek obrazovky zůstal schovaný pod lištou a nešel by odposunout. */
+@supports (height: 100dvh) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+  }
+}
+
 body {
   margin: 0;
   background: #fdf2f8;
