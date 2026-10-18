@@ -25,6 +25,10 @@ describe('katalog oblečení', () => {
     expect(STARTER_ITEMS).toHaveLength(CATEGORIES.length)
   })
 
+  test('šaty: aspoň 10 kousků na koupi', () => {
+    expect(buyable('dress').length).toBeGreaterThanOrEqual(10)
+  })
+
   test('vlasy: aspoň 10 kousků na koupi', () => {
     expect(buyable('hair').length).toBeGreaterThanOrEqual(10)
   })

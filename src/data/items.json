@@ -15,6 +15,13 @@
   { "id": "dress-pink", "name": "Růžové šaty", "category": "dress", "price": 50, "layer": "dress", "asset": "dress-pink" },
   { "id": "dress-yellow-dots", "name": "Žluté puntíkaté šaty", "category": "dress", "price": 50, "layer": "dress", "asset": "dress-yellow-dots" },
   { "id": "dress-ball-purple", "name": "Fialové plesové šaty", "category": "dress", "price": 60, "layer": "dress", "asset": "dress-ball-purple" },
+  { "id": "dress-tshirt-green", "name": "Zelené tričko se sukní", "category": "dress", "price": 45, "layer": "dress", "asset": "dress-tshirt-green" },
+  { "id": "dress-blue", "name": "Modré šaty", "category": "dress", "price": 55, "layer": "dress", "asset": "dress-blue" },
+  { "id": "dress-flowers", "name": "Letní květované šaty", "category": "dress", "price": 75, "layer": "dress", "asset": "dress-flowers" },
+  { "id": "dress-swimsuit", "name": "Plavky s volánkem", "category": "dress", "price": 65, "layer": "dress", "asset": "dress-swimsuit" },
+  { "id": "dress-tracksuit", "name": "Sportovní souprava", "category": "dress", "price": 85, "layer": "dress", "asset": "dress-tracksuit" },
+  { "id": "dress-jeans-top", "name": "Džíny s tričkem", "category": "dress", "price": 95, "layer": "dress", "asset": "dress-jeans-top" },
+  { "id": "dress-princess-pink", "name": "Růžové princeznovské šaty", "category": "dress", "price": 150, "layer": "dress", "asset": "dress-princess-pink" },
 
   { "id": "shoes-sneakers-white", "name": "Bílé tenisky", "category": "shoes", "price": 0, "layer": "shoes", "asset": "shoes-sneakers-white" },
   { "id": "shoes-flats-red", "name": "Červené balerínky", "category": "shoes", "price": 40, "layer": "shoes", "asset": "shoes-flats-red" },

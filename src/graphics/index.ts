@@ -2,7 +2,7 @@ import type { ComponentType } from 'react'
 import type { Category, Item } from '../types'
 import { AccBag, AccBowPink, AccCrown, AccGlasses, AccNecklace } from './accessories'
 import { Background, Body } from './base'
-import { DressBallPurple, DressPink, DressTshirtBlue, DressYellowDots } from './dress'
+import { DRESS_ASSETS } from './dress'
 import { HAIR_ASSETS } from './hair'
 import { ShoesBootsBrown, ShoesFlatsRed, ShoesSandalsMint, ShoesSneakersWhite } from './shoes'
 
@@ -15,10 +15,7 @@ const SVG_ASSETS: Readonly<Record<string, ComponentType>> = {
   background: Background,
   body: Body,
   ...HAIR_ASSETS,
-  'dress-tshirt-blue': DressTshirtBlue,
-  'dress-pink': DressPink,
-  'dress-yellow-dots': DressYellowDots,
-  'dress-ball-purple': DressBallPurple,
+  ...DRESS_ASSETS,
   'shoes-sneakers-white': ShoesSneakersWhite,
   'shoes-flats-red': ShoesFlatsRed,
   'shoes-boots-brown': ShoesBootsBrown,
