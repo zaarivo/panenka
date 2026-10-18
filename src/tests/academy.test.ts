@@ -16,10 +16,10 @@ const multiplication: Problem = {
 }
 
 describe('správná odpověď', () => {
-  test('přidá 10 zlaťáků, na těžké obtížnosti 15', () => {
+  test('přidá 5 zlaťáků, na těžké obtížnosti 8', () => {
     const save = createDefaultSave()
-    expect(applyCorrectAnswer(save, addition, 'easy', true)).toMatchObject({ reward: 10, save: { gold: 10 } })
-    expect(applyCorrectAnswer(save, hardAddition, 'hard', true)).toMatchObject({ reward: 15, save: { gold: 15 } })
+    expect(applyCorrectAnswer(save, addition, 'easy', true)).toMatchObject({ reward: 5, save: { gold: 5 } })
+    expect(applyCorrectAnswer(save, hardAddition, 'hard', true)).toMatchObject({ reward: 8, save: { gold: 8 } })
   })
 
   test('započítá odpověď, uloží novou obtížnost kategorie a úspěšnost', () => {

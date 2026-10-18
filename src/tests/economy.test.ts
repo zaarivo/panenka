@@ -4,18 +4,18 @@ import { createDefaultSave } from '../lib/storage'
 import { seededRng } from './seededRng'
 
 describe('odměny', () => {
-  test('za správnou odpověď lehké a střední 10, těžké 15', () => {
-    expect((['easy', 'medium', 'hard'] as const).map(rewardForCorrect)).toEqual([10, 10, 15])
+  test('za správnou odpověď lehké a střední 5, těžké 8', () => {
+    expect((['easy', 'medium', 'hard'] as const).map(rewardForCorrect)).toEqual([5, 5, 8])
   })
 
-  test('truhla dá 20 až 40 zlaťáků včetně krajních hodnot', () => {
+  test('truhla dá 10 až 20 zlaťáků včetně krajních hodnot', () => {
     const rng = seededRng(9)
     const values = new Set(Array.from({ length: 2000 }, () => rollChestReward(rng)))
-    expect(Math.min(...values)).toBe(20)
-    expect(Math.max(...values)).toBe(40)
-    expect(values.size).toBe(21)
-    expect(rollChestReward(() => 0)).toBe(20)
-    expect(rollChestReward(() => 0.999999)).toBe(40)
+    expect(Math.min(...values)).toBe(10)
+    expect(Math.max(...values)).toBe(20)
+    expect(values.size).toBe(11)
+    expect(rollChestReward(() => 0)).toBe(10)
+    expect(rollChestReward(() => 0.999999)).toBe(20)
   })
 })
 

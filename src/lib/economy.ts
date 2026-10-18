@@ -2,11 +2,11 @@ import { ITEMS_BY_ID } from '../data/items'
 import type { Rng, SaveData, Tier } from '../types'
 
 export function rewardForCorrect(tier: Tier): number {
-  return tier === 'hard' ? 15 : 10
+  return tier === 'hard' ? 8 : 5
 }
 
-export const CHEST_MIN = 20
-export const CHEST_MAX = 40
+export const CHEST_MIN = 10
+export const CHEST_MAX = 20
 
 export function rollChestReward(rng: Rng = Math.random): number {
   return CHEST_MIN + Math.floor(rng() * (CHEST_MAX - CHEST_MIN + 1))
