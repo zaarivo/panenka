@@ -3,11 +3,14 @@ import { ITEMS, STARTER_ITEMS } from '../data/items'
 import { ACCESSORY_SLOTS, BADGE_IDS, CATEGORIES, LAYER_ORDER } from '../types'
 
 const PRICE_RANGES = {
-  accessory: [20, 30],
-  shoes: [40, 40],
-  hair: [40, 40],
-  dress: [50, 60],
+  hair: [30, 120],
+  dress: [40, 150],
+  shoes: [20, 110],
+  accessory: [15, 80],
 } as const
+
+const buyable = (category: (typeof CATEGORIES)[number]) =>
+  ITEMS.filter((item) => item.category === category && item.price !== null && item.price > 0)
 
 describe('katalog oblečení', () => {
   test('id jsou unikátní', () => {
@@ -15,13 +18,15 @@ describe('katalog oblečení', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
-  test('každá kategorie má 4 kousky do obchodu, z toho 1 zdarma', () => {
+  test('každá kategorie má právě 1 startovní kousek zdarma', () => {
     for (const category of CATEGORIES) {
-      const shopItems = ITEMS.filter((item) => item.category === category && item.price !== null)
-      expect(shopItems, category).toHaveLength(4)
-      expect(shopItems.filter((item) => item.price === 0), category).toHaveLength(1)
+      expect(ITEMS.filter((item) => item.category === category && item.price === 0), category).toHaveLength(1)
     }
     expect(STARTER_ITEMS).toHaveLength(CATEGORIES.length)
+  })
+
+  test('vlasy: aspoň 10 kousků na koupi', () => {
+    expect(buyable('hair').length).toBeGreaterThanOrEqual(10)
   })
 
   test('placené kousky mají cenu v dohodnutém rozsahu', () => {

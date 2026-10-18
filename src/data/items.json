@@ -3,6 +3,13 @@
   { "id": "hair-long-blonde", "name": "Dlouhé blond vlasy", "category": "hair", "price": 40, "layer": "hair", "asset": "hair-long-blonde" },
   { "id": "hair-braids-red", "name": "Zrzavé copánky", "category": "hair", "price": 40, "layer": "hair", "asset": "hair-braids-red" },
   { "id": "hair-bob-black", "name": "Černé mikádo", "category": "hair", "price": 40, "layer": "hair", "asset": "hair-bob-black" },
+  { "id": "hair-ponytail-blonde", "name": "Blond culík", "category": "hair", "price": 45, "layer": "hair", "asset": "hair-ponytail-blonde" },
+  { "id": "hair-long-black", "name": "Dlouhé černé vlasy", "category": "hair", "price": 60, "layer": "hair", "asset": "hair-long-black" },
+  { "id": "hair-braids-brown", "name": "Hnědé copánky", "category": "hair", "price": 55, "layer": "hair", "asset": "hair-braids-brown" },
+  { "id": "hair-bob-pink", "name": "Růžové mikádo", "category": "hair", "price": 90, "layer": "hair", "asset": "hair-bob-pink" },
+  { "id": "hair-bun-brown", "name": "Hnědý drdol", "category": "hair", "price": 70, "layer": "hair", "asset": "hair-bun-brown" },
+  { "id": "hair-pigtails-blonde", "name": "Blond dva culíky", "category": "hair", "price": 80, "layer": "hair", "asset": "hair-pigtails-blonde" },
+  { "id": "hair-curly-red", "name": "Zrzavé kudrny", "category": "hair", "price": 110, "layer": "hair", "asset": "hair-curly-red" },
 
   { "id": "dress-tshirt-blue", "name": "Modré tričko se sukní", "category": "dress", "price": 0, "layer": "dress", "asset": "dress-tshirt-blue" },
   { "id": "dress-pink", "name": "Růžové šaty", "category": "dress", "price": 50, "layer": "dress", "asset": "dress-pink" },

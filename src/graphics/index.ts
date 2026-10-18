@@ -3,7 +3,7 @@ import type { Category, Item } from '../types'
 import { AccBag, AccBowPink, AccCrown, AccGlasses, AccNecklace } from './accessories'
 import { Background, Body } from './base'
 import { DressBallPurple, DressPink, DressTshirtBlue, DressYellowDots } from './dress'
-import { HairBobBlack, HairBraidsRed, HairLongBlonde, HairPonytailBrown } from './hair'
+import { HAIR_ASSETS } from './hair'
 import { ShoesBootsBrown, ShoesFlatsRed, ShoesSandalsMint, ShoesSneakersWhite } from './shoes'
 
 export { CANVAS, CANVAS_VIEWBOX } from './shared'
@@ -14,10 +14,7 @@ export const BASE_ASSETS = { background: 'background', body: 'body' } as const
 const SVG_ASSETS: Readonly<Record<string, ComponentType>> = {
   background: Background,
   body: Body,
-  'hair-ponytail-brown': HairPonytailBrown,
-  'hair-long-blonde': HairLongBlonde,
-  'hair-braids-red': HairBraidsRed,
-  'hair-bob-black': HairBobBlack,
+  ...HAIR_ASSETS,
   'dress-tshirt-blue': DressTshirtBlue,
   'dress-pink': DressPink,
   'dress-yellow-dots': DressYellowDots,
