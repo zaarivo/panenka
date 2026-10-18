@@ -27,6 +27,13 @@
   { "id": "shoes-flats-red", "name": "Červené balerínky", "category": "shoes", "price": 40, "layer": "shoes", "asset": "shoes-flats-red" },
   { "id": "shoes-boots-brown", "name": "Hnědé kozačky", "category": "shoes", "price": 40, "layer": "shoes", "asset": "shoes-boots-brown" },
   { "id": "shoes-sandals-mint", "name": "Mátové sandálky", "category": "shoes", "price": 40, "layer": "shoes", "asset": "shoes-sandals-mint" },
+  { "id": "shoes-sneakers-pink", "name": "Růžové tenisky", "category": "shoes", "price": 35, "layer": "shoes", "asset": "shoes-sneakers-pink" },
+  { "id": "shoes-sneakers-blue", "name": "Modré tenisky", "category": "shoes", "price": 30, "layer": "shoes", "asset": "shoes-sneakers-blue" },
+  { "id": "shoes-flats-gold", "name": "Zlaté balerínky", "category": "shoes", "price": 60, "layer": "shoes", "asset": "shoes-flats-gold" },
+  { "id": "shoes-boots-white", "name": "Bílé kozačky", "category": "shoes", "price": 70, "layer": "shoes", "asset": "shoes-boots-white" },
+  { "id": "shoes-rainboots-yellow", "name": "Žluté gumáky", "category": "shoes", "price": 50, "layer": "shoes", "asset": "shoes-rainboots-yellow" },
+  { "id": "shoes-skates", "name": "Bílé brusle", "category": "shoes", "price": 110, "layer": "shoes", "asset": "shoes-skates" },
+  { "id": "shoes-slippers-pink", "name": "Zajíčkové bačkůrky", "category": "shoes", "price": 25, "layer": "shoes", "asset": "shoes-slippers-pink" },
 
   { "id": "acc-bow-pink", "name": "Růžová mašle", "category": "accessory", "price": 0, "layer": "accessory", "asset": "acc-bow-pink", "slot": "head" },
   { "id": "acc-glasses", "name": "Kulaté brýle", "category": "accessory", "price": 20, "layer": "accessory", "asset": "acc-glasses", "slot": "face" },

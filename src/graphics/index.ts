@@ -4,7 +4,7 @@ import { AccBag, AccBowPink, AccCrown, AccGlasses, AccNecklace } from './accesso
 import { Background, Body } from './base'
 import { DRESS_ASSETS } from './dress'
 import { HAIR_ASSETS } from './hair'
-import { ShoesBootsBrown, ShoesFlatsRed, ShoesSandalsMint, ShoesSneakersWhite } from './shoes'
+import { SHOES_ASSETS } from './shoes'
 
 export { CANVAS, CANVAS_VIEWBOX } from './shared'
 
@@ -16,10 +16,7 @@ const SVG_ASSETS: Readonly<Record<string, ComponentType>> = {
   body: Body,
   ...HAIR_ASSETS,
   ...DRESS_ASSETS,
-  'shoes-sneakers-white': ShoesSneakersWhite,
-  'shoes-flats-red': ShoesFlatsRed,
-  'shoes-boots-brown': ShoesBootsBrown,
-  'shoes-sandals-mint': ShoesSandalsMint,
+  ...SHOES_ASSETS,
   'acc-bow-pink': AccBowPink,
   'acc-glasses': AccGlasses,
   'acc-necklace': AccNecklace,
@@ -40,6 +37,8 @@ const ASSET_THUMBNAIL: Readonly<Record<string, string>> = {
   'acc-glasses': '84 84 132 100',
   'acc-necklace': '104 186 92 72',
   'acc-bag': '176 318 76 92',
+  'shoes-rainboots-yellow': '90 436 120 132',
+  'shoes-skates': '96 452 108 122',
 }
 
 /** Výřez plátna, který v náhledu ukáže hlavně daný kousek. */
