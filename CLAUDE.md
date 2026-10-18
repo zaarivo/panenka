@@ -182,6 +182,12 @@ vydělané řešením matematických příkladů.
   odpovědí, v úspěšnosti pro rodiče se zapíše jako neúspěch, vynuluje řadu hvězdiček i řadu
   násobilky, obtížnost kategorie o jednu níž (jen mezi zaškrtnutými).
 
+## Rozpracováno (schváleno, zatím nepostaveno)
+
+- Levnější odměny (5/5/8, truhla 10–20), aspoň 10 kousků na kategorii v obchodě (ceny 20–150)
+  a doplňky podle místa na těle (víc najednou): `docs/superpowers/specs/2026-10-18-obchod-zlataky-doplnky-design.md`.
+  Další krok: plán stavby (superpowers:writing-plans).
+
 ## UI
 
 - Mobil na výšku, min. 56 px dotyková tlačítka
