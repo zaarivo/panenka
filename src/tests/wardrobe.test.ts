@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
+import { ITEMS_BY_ID } from '../data/items'
 import { createDefaultSave } from '../lib/storage'
-import { toggleEquip } from '../lib/wardrobe'
+import { equipSlot, toggleEquip } from '../lib/wardrobe'
 
 const withOwned = (...ids: string[]) => {
   const save = createDefaultSave()
@@ -35,5 +36,29 @@ describe('oblékání v šatníku', () => {
     const save = createDefaultSave()
     toggleEquip(save, 'dress-tshirt-blue')
     expect(save.equipped.dress).toBe('dress-tshirt-blue')
+  })
+})
+
+describe('doplňky podle místa na těle', () => {
+  test('brýle, náhrdelník a kabelka jdou nasadit zároveň s mašlí', () => {
+    let save = withOwned('acc-glasses', 'acc-necklace', 'acc-bag')
+    for (const id of ['acc-glasses', 'acc-necklace', 'acc-bag']) save = toggleEquip(save, id)
+    expect(save.equipped).toMatchObject({
+      'accessory:head': 'acc-bow-pink',
+      'accessory:face': 'acc-glasses',
+      'accessory:neck': 'acc-necklace',
+      'accessory:hand': 'acc-bag',
+    })
+  })
+
+  test('korunka vymění mašli, protože obě patří na hlavu', () => {
+    const save = toggleEquip(withOwned('acc-crown'), 'acc-crown')
+    expect(save.equipped['accessory:head']).toBe('acc-crown')
+    expect(Object.values(save.equipped)).not.toContain('acc-bow-pink')
+  })
+
+  test('místo nasazení podle kousku', () => {
+    expect(equipSlot(ITEMS_BY_ID.get('acc-glasses')!)).toBe('accessory:face')
+    expect(equipSlot(ITEMS_BY_ID.get('dress-pink')!)).toBe('dress')
   })
 })

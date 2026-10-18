@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { ITEMS, STARTER_ITEMS } from '../data/items'
-import { BADGE_IDS, CATEGORIES, LAYER_ORDER } from '../types'
+import { ACCESSORY_SLOTS, BADGE_IDS, CATEGORIES, LAYER_ORDER } from '../types'
 
 const PRICE_RANGES = {
   accessory: [20, 30],
@@ -37,6 +37,13 @@ describe('katalog oblečení', () => {
     const locked = ITEMS.filter((item) => item.price === null)
     expect(locked.map((item) => item.id)).toEqual(['acc-crown'])
     for (const item of locked) expect(BADGE_IDS).toContain(item.unlockBadge)
+  })
+
+  test('každý doplněk má platné místo na těle, jiné kousky žádné', () => {
+    for (const item of ITEMS) {
+      if (item.category === 'accessory') expect(ACCESSORY_SLOTS, item.id).toContain(item.slot)
+      else expect(item.slot, item.id).toBeUndefined()
+    }
   })
 
   test('kategorie a vrstvy mají platné hodnoty', () => {

@@ -1,7 +1,15 @@
 export const CATEGORIES = ['hair', 'dress', 'shoes', 'accessory'] as const
 export type Category = (typeof CATEGORIES)[number]
 
-export const LAYER_ORDER = ['background', 'body', 'shoes', 'dress', 'hair', 'accessory'] as const
+/** Místa na těle pro doplňky — na každém nejvýš jeden kousek, různá místa najednou. */
+export const ACCESSORY_SLOTS = ['head', 'face', 'neck', 'hand', 'ears'] as const
+export type AccessorySlot = (typeof ACCESSORY_SLOTS)[number]
+
+/** Klíč nasazení: kategorie oblečení, u doplňků místo na těle. */
+export type EquipSlot = Exclude<Category, 'accessory'> | `accessory:${AccessorySlot}`
+export type Equipped = Partial<Record<EquipSlot, string>>
+
+export const LAYER_ORDER =['background', 'body', 'shoes', 'dress', 'hair', 'accessory'] as const
 export type Layer = (typeof LAYER_ORDER)[number]
 export type ItemLayer = Exclude<Layer, 'background' | 'body'>
 
@@ -42,6 +50,8 @@ export interface Item {
   layer: ItemLayer
   asset: string
   unlockBadge?: BadgeId
+  /** Jen u doplňků. */
+  slot?: AccessorySlot
 }
 
 export interface Settings {
@@ -53,7 +63,7 @@ export interface SaveData {
   saveVersion: 2
   gold: number
   owned: string[]
-  equipped: Partial<Record<Category, string>>
+  equipped: Equipped
   badges: BadgeId[]
   stats: {
     totalCorrect: number

@@ -14,10 +14,10 @@
   { "id": "shoes-boots-brown", "name": "Hnědé kozačky", "category": "shoes", "price": 40, "layer": "shoes", "asset": "shoes-boots-brown" },
   { "id": "shoes-sandals-mint", "name": "Mátové sandálky", "category": "shoes", "price": 40, "layer": "shoes", "asset": "shoes-sandals-mint" },
 
-  { "id": "acc-bow-pink", "name": "Růžová mašle", "category": "accessory", "price": 0, "layer": "accessory", "asset": "acc-bow-pink" },
-  { "id": "acc-glasses", "name": "Kulaté brýle", "category": "accessory", "price": 20, "layer": "accessory", "asset": "acc-glasses" },
-  { "id": "acc-necklace", "name": "Perlový náhrdelník", "category": "accessory", "price": 25, "layer": "accessory", "asset": "acc-necklace" },
-  { "id": "acc-bag", "name": "Kabelka se srdíčkem", "category": "accessory", "price": 30, "layer": "accessory", "asset": "acc-bag" },
+  { "id": "acc-bow-pink", "name": "Růžová mašle", "category": "accessory", "price": 0, "layer": "accessory", "asset": "acc-bow-pink", "slot": "head" },
+  { "id": "acc-glasses", "name": "Kulaté brýle", "category": "accessory", "price": 20, "layer": "accessory", "asset": "acc-glasses", "slot": "face" },
+  { "id": "acc-necklace", "name": "Perlový náhrdelník", "category": "accessory", "price": 25, "layer": "accessory", "asset": "acc-necklace", "slot": "neck" },
+  { "id": "acc-bag", "name": "Kabelka se srdíčkem", "category": "accessory", "price": 30, "layer": "accessory", "asset": "acc-bag", "slot": "hand" },
 
-  { "id": "acc-crown", "name": "Zlatá korunka", "category": "accessory", "price": null, "layer": "accessory", "asset": "acc-crown", "unlockBadge": "times-table-star" }
+  { "id": "acc-crown", "name": "Zlatá korunka", "category": "accessory", "price": null, "layer": "accessory", "asset": "acc-crown", "slot": "head", "unlockBadge": "times-table-star" }
 ]

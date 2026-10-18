@@ -5,6 +5,7 @@ import {
   TIERS,
   TOPIC_IDS,
   type Category,
+  type Equipped,
   type Practice,
   type PracticeKey,
   type PracticeRecord,
@@ -16,6 +17,7 @@ import {
 import { clampTier } from './difficulty'
 import { RECENT_WINDOW } from './practice'
 import { allTiersOn, sortTiers } from './topics'
+import { equipSlot } from './wardrobe'
 
 export const SAVE_KEY = 'panenka_save'
 export const CORRUPT_BACKUP_KEY = 'panenka_save_corrupt'
@@ -32,8 +34,8 @@ function lowestTiers(topics: TopicSettings): Record<TopicId, Tier> {
 }
 
 export function createDefaultSave(): SaveData {
-  const equipped: Partial<Record<Category, string>> = {}
-  for (const item of STARTER_ITEMS) equipped[item.category] = item.id
+  const equipped: Equipped = {}
+  for (const item of STARTER_ITEMS) equipped[equipSlot(item)] = item.id
   const topics = allTiersOn()
   return {
     saveVersion: SAVE_VERSION,
