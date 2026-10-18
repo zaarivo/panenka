@@ -70,6 +70,11 @@ describe('hodiny', () => {
     }
   })
 
+  test('nápověda u celé hodiny neříká, že hodina má 0 minut', () => {
+    const task = SEEDS.map((seed) => buildClockTask('easy', seededRng(seed))).find((t) => t.mode === 'words' && t.minutes === 0)!
+    expect(task.hint).toBe('U celé hodiny stojí dlouhá ručička přesně na 12.')
+  })
+
   test('nápověda neprozradí čas', () => {
     for (const tier of ['easy', 'medium', 'hard'] as const) {
       for (const seed of SEEDS) {

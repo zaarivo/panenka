@@ -40,7 +40,7 @@ function wordsHint(hours: number, minutes: SpokenMinutes): string {
   const words = timeInWords(hours, minutes)
   const spoken = words.charAt(0).toUpperCase() + words.slice(1)
   const next = nextHour(hours)
-  if (minutes === 0) return 'Celá hodina má 0 minut, napiš :00.'
+  if (minutes === 0) return 'U celé hodiny stojí dlouhá ručička přesně na 12.'
   if (minutes === 15) return `${spoken} je čtvrt hodiny po ${hours}. hodině.`
   if (minutes === 30) return `${spoken} je půl hodiny před ${next}. hodinou.`
   return `${spoken} je čtvrt hodiny před ${next}. hodinou.`

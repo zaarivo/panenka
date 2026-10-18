@@ -44,7 +44,7 @@
     - půl: „Půl 6 je půl hodiny před 6. hodinou.“
     - čtvrt: „Čtvrt na 3 je čtvrt hodiny po 2. hodině.“
     - třičtvrtě: „Třičtvrtě na 5 je čtvrt hodiny před 5. hodinou.“
-    - celá: „Celá hodina má 0 minut, napiš :00.“
+    - celá: „U celé hodiny stojí dlouhá ručička přesně na 12.“
   - Ciferník: „Krátká ručička ukazuje hodiny, dlouhá minuty. Každé číslo na ciferníku je 5 minut.“
 - Ciferník (SVG): bílý, fialový okraj, čísla 1–12. Krátká růžová ručička hodin se posouvá plynule podle minut, dlouhá fialová ručička minut.
 - Vnitřní limit úspěchu: `money` a `clock` mají 60 000 ms.
