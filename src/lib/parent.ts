@@ -1,7 +1,9 @@
-import { PROBLEM_TYPES, type Level, type SaveData, type Settings } from '../types'
+import { TOPIC_IDS, type SaveData, type Tier, type TopicId, type TopicSettings } from '../types'
 import { awardBadges } from './badges'
-import { clampLevel } from './difficulty'
+import { clampTier } from './difficulty'
+import { clearTiers, snooze, type Recommendation } from './practice'
 import { createDefaultSave, parseSave } from './storage'
+import { practiceKey, sortTiers } from './topics'
 
 export const PIN_LENGTH = 4
 export const MAX_IMPORT_BYTES = 100_000
@@ -23,37 +25,45 @@ export function verifyPin(save: SaveData, pin: string): boolean {
   return save.parentPinHash !== null && save.parentPinHash === hashPin(pin)
 }
 
-export function updateSettings(save: SaveData, settings: Settings): SaveData {
-  const enabledTypes = PROBLEM_TYPES.filter((type) => settings.enabledTypes.includes(type))
-  const minLevel = Math.min(settings.minLevel, settings.maxLevel) as Level
-  const maxLevel = Math.max(settings.minLevel, settings.maxLevel) as Level
-  const next: Settings = {
-    soundOn: settings.soundOn,
-    enabledTypes: enabledTypes.length > 0 ? enabledTypes : save.settings.enabledTypes,
-    minLevel,
-    maxLevel,
+const lowestTiers = (topics: TopicSettings) =>
+  Object.fromEntries(TOPIC_IDS.map((topic) => [topic, topics[topic][0] ?? 'easy'])) as Record<TopicId, Tier>
+
+/** Nové zaškrtnutí od rodiče: srovná aktuální obtížnosti a smaže historii odškrtnutých obtížností. */
+export function updateTopics(save: SaveData, topics: TopicSettings): SaveData {
+  const next = Object.fromEntries(TOPIC_IDS.map((topic) => [topic, sortTiers(topics[topic] ?? [])])) as TopicSettings
+  if (!TOPIC_IDS.some((topic) => next[topic].length > 0)) return save
+
+  let practice = save.practice
+  for (const topic of TOPIC_IDS) {
+    const removed = save.settings.topics[topic].filter((tier) => !next[topic].includes(tier))
+    if (removed.length > 0) practice = clearTiers(practice, topic, removed)
   }
-  return { ...save, settings: next, level: clampLevel(save.level, next) }
+  const currentTier = Object.fromEntries(
+    TOPIC_IDS.map((topic) => [topic, clampTier(save.currentTier[topic], next[topic])]),
+  ) as Record<TopicId, Tier>
+
+  return { ...save, practice, currentTier, settings: { ...save.settings, topics: next } }
 }
 
-/** Zaškrtávátka stupňů tvoří vždy souvislý rozsah s aspoň jedním stupněm. */
-export function toggleLevelRange(minLevel: Level, maxLevel: Level, level: Level): { minLevel: Level; maxLevel: Level } {
-  if (level < minLevel) return { minLevel: level, maxLevel }
-  if (level > maxLevel) return { minLevel, maxLevel: level }
-  if (minLevel === maxLevel) return { minLevel, maxLevel }
-  if (level === minLevel) return { minLevel: (level + 1) as Level, maxLevel }
-  if (level === maxLevel) return { minLevel, maxLevel: (level - 1) as Level }
-  return { minLevel, maxLevel }
+export function acceptRecommendation(save: SaveData, recommendation: Recommendation): SaveData {
+  const { topic, action, targetTier } = recommendation
+  const current = save.settings.topics[topic]
+  const tiers = action === 'add' ? [...current, targetTier] : current.filter((tier) => tier !== targetTier)
+  return updateTopics(save, { ...save.settings.topics, [topic]: tiers })
 }
 
-/** Smaže postup (zlaťáky, oblečení, odznaky, statistiky), ale nechá PIN a nastavení od rodiče. */
+export function snoozeRecommendation(save: SaveData, recommendation: Recommendation): SaveData {
+  return { ...save, practice: snooze(save.practice, practiceKey(recommendation.topic, recommendation.tier)) }
+}
+
+/** Smaže postup (zlaťáky, oblečení, odznaky, statistiky, úspěšnost), ale nechá PIN a nastavení od rodiče. */
 export function resetProgress(save: SaveData): SaveData {
-  const fresh = createDefaultSave()
   return {
-    ...fresh,
+    ...createDefaultSave(),
     settings: save.settings,
     parentPinHash: save.parentPinHash,
-    level: clampLevel(fresh.level, save.settings),
+    currentTier: lowestTiers(save.settings.topics),
+    practice: {},
   }
 }
 
@@ -66,7 +76,7 @@ export function exportFileName(date = new Date()): string {
   return `panenka-postup-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.json`
 }
 
-/** Vrátí nový stav z importovaného textu, nebo null, pokud soubor není platný postup. */
+/** Vrátí nový stav z importovaného textu (verze 1 i 2), nebo null, pokud soubor není platný postup. */
 export function importProgress(current: SaveData, text: string): SaveData | null {
   if (text.length > MAX_IMPORT_BYTES) return null
   let raw: unknown

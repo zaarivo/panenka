@@ -1,41 +1,53 @@
-import type { Level, SaveData } from '../types'
+import type { SaveData, Tier } from '../types'
 import { rewardForCorrect } from './economy'
 import type { Problem } from './mathGenerator'
+import { recordResult } from './practice'
+import { practiceKey } from './topics'
 
 /** Počet vyřešených příkladů v jednom kole — po kole přijde shrnutí a chvilka na oddech. */
 export const ROUND_SIZE = 10
 
-export function applyCorrectAnswer(save: SaveData, problem: Problem, nextLevel: Level): { save: SaveData; reward: number } {
-  const reward = rewardForCorrect(problem.level)
+const withTier = (save: SaveData, problem: Problem, nextTier: Tier) => ({ ...save.currentTier, [problem.topic]: nextTier })
+
+/** `success` = správně napoprvé a v limitu (jen pro statistiku rodiče, na zlaťáky nemá vliv). */
+export function applyCorrectAnswer(
+  save: SaveData,
+  problem: Problem,
+  nextTier: Tier,
+  success: boolean,
+): { save: SaveData; reward: number } {
+  const reward = rewardForCorrect(problem.tier)
   return {
     reward,
     save: {
       ...save,
       gold: save.gold + reward,
-      level: nextLevel,
+      currentTier: withTier(save, problem, nextTier),
+      practice: recordResult(save.practice, practiceKey(problem.topic, problem.tier), success),
       stats: {
         totalCorrect: save.stats.totalCorrect + 1,
         multiplicationStreak:
-          problem.type === 'multiplication' ? save.stats.multiplicationStreak + 1 : save.stats.multiplicationStreak,
+          problem.topic === 'multiplication' ? save.stats.multiplicationStreak + 1 : save.stats.multiplicationStreak,
       },
     },
   }
 }
 
-export function applyWrongAnswer(save: SaveData, problem: Problem, nextLevel: Level): SaveData {
+export function applyWrongAnswer(save: SaveData, problem: Problem, nextTier: Tier): SaveData {
   return {
     ...save,
-    level: nextLevel,
+    currentTier: withTier(save, problem, nextTier),
     stats: {
       ...save.stats,
-      multiplicationStreak: problem.type === 'multiplication' ? 0 : save.stats.multiplicationStreak,
+      multiplicationStreak: problem.topic === 'multiplication' ? 0 : save.stats.multiplicationStreak,
     },
   }
 }
 
-/** Přeskočení se ukládá stejně jako chyba: bez zlaťáků a s přerušenou řadou násobilky. */
-export function applySkippedProblem(save: SaveData, problem: Problem, nextLevel: Level): SaveData {
-  return applyWrongAnswer(save, problem, nextLevel)
+/** Přeskočení: jako chyba (bez zlaťáků, přeruší řadu násobilky) a zapíše se jako neúspěch. */
+export function applySkippedProblem(save: SaveData, problem: Problem, nextTier: Tier): SaveData {
+  const after = applyWrongAnswer(save, problem, nextTier)
+  return { ...after, practice: recordResult(after.practice, practiceKey(problem.topic, problem.tier), false) }
 }
 
 export function addGold(save: SaveData, amount: number): SaveData {

@@ -3,62 +3,75 @@ import { addGold, applyCorrectAnswer, applySkippedProblem, applyWrongAnswer } fr
 import type { Problem } from '../lib/mathGenerator'
 import { createDefaultSave } from '../lib/storage'
 
-const addition: Problem = { type: 'addSub', level: 1, prompt: '3 + 4 = ?', answer: 7, hint: '', key: 'a' }
-const hardAddition: Problem = { ...addition, level: 3 }
-const multiplication: Problem = { type: 'multiplication', level: 2, prompt: '3 × 4 = ?', answer: 12, hint: '', key: 'm' }
+const addition: Problem = { kind: 'number', topic: 'add20', tier: 'easy', prompt: '3 + 4 = ?', answer: 7, hint: '', key: 'a' }
+const hardAddition: Problem = { ...addition, tier: 'hard' }
+const multiplication: Problem = {
+  kind: 'number',
+  topic: 'multiplication',
+  tier: 'medium',
+  prompt: '3 × 4 = ?',
+  answer: 12,
+  hint: '',
+  key: 'm',
+}
 
 describe('správná odpověď', () => {
-  test('přidá 10 zlaťáků, na těžším stupni 15', () => {
+  test('přidá 10 zlaťáků, na těžké obtížnosti 15', () => {
     const save = createDefaultSave()
-    expect(applyCorrectAnswer(save, addition, 1)).toMatchObject({ reward: 10, save: { gold: 10 } })
-    expect(applyCorrectAnswer(save, hardAddition, 3)).toMatchObject({ reward: 15, save: { gold: 15 } })
+    expect(applyCorrectAnswer(save, addition, 'easy', true)).toMatchObject({ reward: 10, save: { gold: 10 } })
+    expect(applyCorrectAnswer(save, hardAddition, 'hard', true)).toMatchObject({ reward: 15, save: { gold: 15 } })
   })
 
-  test('započítá správnou odpověď a uloží nový stupeň', () => {
-    const { save } = applyCorrectAnswer(createDefaultSave(), addition, 2)
+  test('započítá odpověď, uloží novou obtížnost kategorie a úspěšnost', () => {
+    const { save } = applyCorrectAnswer(createDefaultSave(), addition, 'medium', false)
     expect(save.stats.totalCorrect).toBe(1)
-    expect(save.level).toBe(2)
+    expect(save.currentTier.add20).toBe('medium')
+    expect(save.currentTier.add100).toBe('easy')
+    expect(save.practice['add20:easy']).toEqual({ recent: [false], total: 1, snoozedAtTotal: null })
   })
 
   test('řadu násobilky prodlouží jen násobilka, jiné příklady ji nepřeruší', () => {
     let save = createDefaultSave()
-    save = applyCorrectAnswer(save, multiplication, 1).save
-    save = applyCorrectAnswer(save, addition, 1).save
-    save = applyCorrectAnswer(save, multiplication, 1).save
+    save = applyCorrectAnswer(save, multiplication, 'medium', true).save
+    save = applyCorrectAnswer(save, addition, 'easy', true).save
+    save = applyCorrectAnswer(save, multiplication, 'medium', true).save
     expect(save.stats.multiplicationStreak).toBe(2)
   })
 })
 
 describe('chybná odpověď', () => {
-  test('nic nestojí', () => {
+  test('nic nestojí a úspěšnost zatím nezapisuje', () => {
     const save = { ...createDefaultSave(), gold: 30 }
-    expect(applyWrongAnswer(save, addition, 1).gold).toBe(30)
+    const after = applyWrongAnswer(save, addition, 'easy')
+    expect(after.gold).toBe(30)
+    expect(after.practice).toEqual({})
   })
 
   test('chyba v násobilce řadu násobilky vynuluje, jiná chyba ne', () => {
     const save = { ...createDefaultSave(), stats: { totalCorrect: 5, multiplicationStreak: 4 } }
-    expect(applyWrongAnswer(save, multiplication, 1).stats).toEqual({ totalCorrect: 5, multiplicationStreak: 0 })
-    expect(applyWrongAnswer(save, addition, 1).stats).toEqual({ totalCorrect: 5, multiplicationStreak: 4 })
+    expect(applyWrongAnswer(save, multiplication, 'medium').stats).toEqual({ totalCorrect: 5, multiplicationStreak: 0 })
+    expect(applyWrongAnswer(save, addition, 'easy').stats).toEqual({ totalCorrect: 5, multiplicationStreak: 4 })
   })
 
-  test('uloží snížený stupeň', () => {
-    expect(applyWrongAnswer({ ...createDefaultSave(), level: 3 }, addition, 2).level).toBe(2)
+  test('uloží sníženou obtížnost kategorie', () => {
+    const save = { ...createDefaultSave(), currentTier: { ...createDefaultSave().currentTier, add20: 'hard' as const } }
+    expect(applyWrongAnswer(save, hardAddition, 'medium').currentTier.add20).toBe('medium')
   })
 })
 
 describe('přeskočený příklad', () => {
-  test('nedá zlaťáky ani se nezapočítá jako správný a uloží nižší stupeň', () => {
-    const save = { ...createDefaultSave(), gold: 30, level: 2 as const, stats: { totalCorrect: 5, multiplicationStreak: 0 } }
-    const after = applySkippedProblem(save, addition, 1)
+  test('nedá zlaťáky, nezapočítá se jako správný a zapíše neúspěch', () => {
+    const save = { ...createDefaultSave(), gold: 30, stats: { totalCorrect: 5, multiplicationStreak: 0 } }
+    const after = applySkippedProblem(save, addition, 'easy')
     expect(after.gold).toBe(30)
     expect(after.stats.totalCorrect).toBe(5)
-    expect(after.level).toBe(1)
+    expect(after.practice['add20:easy']?.recent).toEqual([false])
   })
 
   test('přeskočená násobilka přeruší řadu k Násobilkové hvězdě, jiný příklad ne', () => {
     const save = { ...createDefaultSave(), stats: { totalCorrect: 5, multiplicationStreak: 4 } }
-    expect(applySkippedProblem(save, multiplication, 1).stats.multiplicationStreak).toBe(0)
-    expect(applySkippedProblem(save, addition, 1).stats.multiplicationStreak).toBe(4)
+    expect(applySkippedProblem(save, multiplication, 'easy').stats.multiplicationStreak).toBe(0)
+    expect(applySkippedProblem(save, addition, 'easy').stats.multiplicationStreak).toBe(4)
   })
 })
 
