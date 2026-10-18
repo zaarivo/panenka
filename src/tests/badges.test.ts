@@ -4,7 +4,7 @@ import { createDefaultSave } from '../lib/storage'
 
 const withStats = (totalCorrect: number, multiplicationStreak = 0) => ({
   ...createDefaultSave(),
-  stats: { totalCorrect, multiplicationStreak },
+  stats: { ...createDefaultSave().stats, totalCorrect, multiplicationStreak },
 })
 
 describe('odznaky', () => {

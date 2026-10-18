@@ -158,12 +158,14 @@ describe('převod z verze 1', () => {
 
   test('převod reálného v1 save zachová postup a přeloží nastavení', () => {
     const save = parseSave(phoneV1)!
-    expect(save.saveVersion).toBe(3)
+    expect(save.saveVersion).toBe(4)
     expect(save.gold).toBe(131)
-    expect(save.owned).toEqual(expect.arrayContaining(['acc-crown', 'dress-pink']))
-    expect(save.equipped).toEqual({ hair: 'hair-ponytail-brown', dress: 'dress-pink', shoes: 'shoes-sneakers-white', 'accessory:head': 'acc-crown' })
+    expect(save.owned).toEqual(expect.arrayContaining(['dress-pink']))
+    expect(save.owned).not.toContain('acc-crown')
+    expect(save.equipped).toEqual({ hair: 'hair-ponytail-brown', dress: 'dress-pink', shoes: 'shoes-sneakers-white' })
     expect(save.badges).toEqual(['first-step', 'times-table-star'])
-    expect(save.stats).toEqual({ totalCorrect: 37, multiplicationStreak: 12 })
+    expect(save.stats).toEqual({ totalCorrect: 37, multiplicationStreak: 12, correctByTopic: { add20: 0, add100: 0, multiplication: 0, missingNumber: 0, comparison: 0, wordProblems: 0 } })
+    expect(save.medals).toEqual([])
     expect(save.parentPinHash).toBe('fnv1a:39e21db5')
     expect(save.settings.soundOn).toBe(false)
     expect(save.settings.topics).toEqual({
@@ -202,11 +204,11 @@ describe('převod z verze 1', () => {
     expect(topics.add100).toEqual(['medium', 'hard'])
   })
 
-  test('převedený stav se uloží a načte jako v3', () => {
+  test('převedený stav se uloží a načte jako v4', () => {
     const storage = memoryStorage({ [SAVE_KEY]: JSON.stringify(phoneV1) })
     const loaded = loadSave(storage)
     writeSave(loaded, storage)
-    expect(JSON.parse(storage.getItem(SAVE_KEY)!).saveVersion).toBe(3)
+    expect(JSON.parse(storage.getItem(SAVE_KEY)!).saveVersion).toBe(4)
     expect(loadSave(storage)).toEqual(loaded)
   })
 
@@ -224,12 +226,13 @@ describe('převod z verze 2 a nasazení po místech', () => {
     owned: [...createDefaultSave().owned, 'acc-crown', 'dress-pink', 'acc-glasses'],
     equipped: { hair: 'hair-ponytail-brown', dress: 'dress-pink', shoes: 'shoes-sneakers-white', accessory: 'acc-crown' },
     badges: ['first-step', 'times-table-star'],
+    stats: { totalCorrect: 320, multiplicationStreak: 0 },
     parentPinHash: 'fnv1a:39e21db5',
   }
 
   test('korunka nasazená ve verzi 2 skončí na hlavě, zbytek beze změny', () => {
     const save = parseSave(phoneV2)!
-    expect(save.saveVersion).toBe(3)
+    expect(save.saveVersion).toBe(4)
     expect(save.equipped).toEqual({
       hair: 'hair-ponytail-brown',
       dress: 'dress-pink',
@@ -263,7 +266,66 @@ describe('převod z verze 2 a nasazení po místech', () => {
 
   test('záloha ve verzi 2 se nahraje přes import', () => {
     const imported = importProgress(createDefaultSave(), JSON.stringify(phoneV2))!
-    expect(imported.saveVersion).toBe(3)
+    expect(imported.saveVersion).toBe(4)
     expect(imported.equipped['accessory:head']).toBe('acc-crown')
+  })
+})
+
+describe('verze 4: medaile a Zlatá korunka', () => {
+  const crownedV3 = (totalCorrect: number) => ({
+    ...createDefaultSave(),
+    saveVersion: 3,
+    owned: [...createDefaultSave().owned, 'acc-crown'],
+    equipped: { ...createDefaultSave().equipped, 'accessory:head': 'acc-crown' },
+    badges: ['times-table-star'],
+    stats: { totalCorrect, multiplicationStreak: 0 },
+  })
+
+  test('v3 s korunkou a 150 správnými: korunka zmizí z vlastněných i z hlavy', () => {
+    const save = parseSave(crownedV3(150))!
+    expect(save.saveVersion).toBe(4)
+    expect(save.owned).not.toContain('acc-crown')
+    expect(save.equipped['accessory:head']).toBeUndefined()
+    expect(save.stats.correctByTopic).toEqual({ add20: 0, add100: 0, multiplication: 0, missingNumber: 0, comparison: 0, wordProblems: 0 })
+    expect(save.medals).toEqual([])
+  })
+
+  test('v3 s 320 správnými si korunku nechá', () => {
+    const save = parseSave(crownedV3(320))!
+    expect(save.owned).toContain('acc-crown')
+    expect(save.equipped['accessory:head']).toBe('acc-crown')
+  })
+
+  test('v4 korunku neodebírá', () => {
+    const save = parseSave({ ...crownedV3(0), saveVersion: 4, stats: { ...createDefaultSave().stats } })!
+    expect(save.owned).toContain('acc-crown')
+  })
+
+  test('poškozené medaile a počty se vyčistí', () => {
+    const raw = {
+      ...createDefaultSave(),
+      medals: ['add20:bronze', 'x:gold', 'add20:bronze', 5],
+      stats: { totalCorrect: 20, multiplicationStreak: 0, correctByTopic: { add20: 12, add100: -1, multiplication: 2.5 } },
+    }
+    const save = parseSave(raw)!
+    expect(save.medals).toEqual(['add20:bronze'])
+    expect(save.stats.correctByTopic).toEqual({ add20: 12, add100: 0, multiplication: 0, missingNumber: 0, comparison: 0, wordProblems: 0 })
+  })
+
+  test('v4 se zapíše a načte beze změny', () => {
+    const storage = memoryStorage()
+    const save = {
+      ...createDefaultSave(),
+      medals: ['multiplication:bronze' as const, 'multiplication:silver' as const],
+      stats: { totalCorrect: 130, multiplicationStreak: 3, correctByTopic: { ...createDefaultSave().stats.correctByTopic, multiplication: 120 } },
+    }
+    writeSave(save, storage)
+    expect(loadSave(storage)).toEqual(save)
+  })
+
+  test('import zálohy v3 odebere Zlatou korunku pod 300 správných', () => {
+    const imported = importProgress(createDefaultSave(), JSON.stringify(crownedV3(150)))!
+    expect(imported.owned).not.toContain('acc-crown')
+    expect(imported.equipped['accessory:head']).toBeUndefined()
   })
 })

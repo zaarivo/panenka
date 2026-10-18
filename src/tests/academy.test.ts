@@ -48,9 +48,9 @@ describe('chybná odpověď', () => {
   })
 
   test('chyba v násobilce řadu násobilky vynuluje, jiná chyba ne', () => {
-    const save = { ...createDefaultSave(), stats: { totalCorrect: 5, multiplicationStreak: 4 } }
-    expect(applyWrongAnswer(save, multiplication, 'medium').stats).toEqual({ totalCorrect: 5, multiplicationStreak: 0 })
-    expect(applyWrongAnswer(save, addition, 'easy').stats).toEqual({ totalCorrect: 5, multiplicationStreak: 4 })
+    const save = { ...createDefaultSave(), stats: { ...createDefaultSave().stats, totalCorrect: 5, multiplicationStreak: 4 } }
+    expect(applyWrongAnswer(save, multiplication, 'medium').stats).toEqual({ ...save.stats, multiplicationStreak: 0 })
+    expect(applyWrongAnswer(save, addition, 'easy').stats).toEqual({ ...save.stats, multiplicationStreak: 4 })
   })
 
   test('uloží sníženou obtížnost kategorie', () => {
@@ -61,7 +61,7 @@ describe('chybná odpověď', () => {
 
 describe('přeskočený příklad', () => {
   test('nedá zlaťáky, nezapočítá se jako správný a zapíše neúspěch', () => {
-    const save = { ...createDefaultSave(), gold: 30, stats: { totalCorrect: 5, multiplicationStreak: 0 } }
+    const save = { ...createDefaultSave(), gold: 30, stats: { ...createDefaultSave().stats, totalCorrect: 5, multiplicationStreak: 0 } }
     const after = applySkippedProblem(save, addition, 'easy')
     expect(after.gold).toBe(30)
     expect(after.stats.totalCorrect).toBe(5)
@@ -69,7 +69,7 @@ describe('přeskočený příklad', () => {
   })
 
   test('přeskočená násobilka přeruší řadu k Násobilkové hvězdě, jiný příklad ne', () => {
-    const save = { ...createDefaultSave(), stats: { totalCorrect: 5, multiplicationStreak: 4 } }
+    const save = { ...createDefaultSave(), stats: { ...createDefaultSave().stats, totalCorrect: 5, multiplicationStreak: 4 } }
     expect(applySkippedProblem(save, multiplication, 'easy').stats.multiplicationStreak).toBe(0)
     expect(applySkippedProblem(save, addition, 'easy').stats.multiplicationStreak).toBe(4)
   })

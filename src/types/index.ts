@@ -23,6 +23,11 @@ export type TopicId = (typeof TOPIC_IDS)[number]
 export const TIERS = ['easy', 'medium', 'hard'] as const
 export type Tier = (typeof TIERS)[number]
 
+/** Medaile v každé kategorii úloh: bronzová, stříbrná, zlatá. */
+export const MEDAL_TIERS = ['bronze', 'silver', 'gold'] as const
+export type MedalTier = (typeof MEDAL_TIERS)[number]
+export type MedalId = `${TopicId}:${MedalTier}`
+
 /** Zaškrtnuté obtížnosti každé kategorie; prázdné pole = kategorie vypnutá. */
 export type TopicSettings = Record<TopicId, Tier[]>
 
@@ -60,7 +65,7 @@ export interface Settings {
 }
 
 export interface SaveData {
-  saveVersion: 3
+  saveVersion: 4
   gold: number
   owned: string[]
   equipped: Equipped
@@ -68,7 +73,10 @@ export interface SaveData {
   stats: {
     totalCorrect: number
     multiplicationStreak: number
+    /** Správně vyřešené příklady po kategoriích (počítá se od verze 4). */
+    correctByTopic: Record<TopicId, number>
   }
+  medals: MedalId[]
   /** Aktuální obtížnost každé kategorie (hra ji posouvá sama). */
   currentTier: Record<TopicId, Tier>
   practice: Practice

@@ -89,7 +89,8 @@ describe('reset', () => {
       gold: 300,
       owned: [...base.owned, 'dress-pink'],
       badges: ['first-step'],
-      stats: { totalCorrect: 50, multiplicationStreak: 3 },
+      stats: { totalCorrect: 50, multiplicationStreak: 3, correctByTopic: { ...base.stats.correctByTopic, add20: 40 } },
+      medals: ['add20:bronze'],
       currentTier: { ...base.currentTier, add20: 'hard' },
       practice: { 'add20:hard': record(5, 10) },
       parentPinHash: hashPin('1111'),
@@ -99,7 +100,8 @@ describe('reset', () => {
     expect(reset.gold).toBe(0)
     expect(reset.owned).toEqual(base.owned)
     expect(reset.badges).toEqual([])
-    expect(reset.stats).toEqual({ totalCorrect: 0, multiplicationStreak: 0 })
+    expect(reset.stats).toEqual(createDefaultSave().stats)
+    expect(reset.medals).toEqual([])
     expect(reset.practice).toEqual({})
     expect(reset.currentTier.add20).toBe('medium')
     expect(reset.parentPinHash).toBe(save.parentPinHash)
@@ -129,7 +131,7 @@ describe('export a import', () => {
   })
 
   test('import doplní odznaky podle statistik, Násobilková hvězda korunku nedá', () => {
-    const text = exportProgress({ ...createDefaultSave(), stats: { totalCorrect: 12, multiplicationStreak: 10 } })
+    const text = exportProgress({ ...createDefaultSave(), stats: { ...createDefaultSave().stats, totalCorrect: 12, multiplicationStreak: 10 } })
     const imported = importProgress(createDefaultSave(), text)!
     expect(imported.badges).toEqual(['first-step', 'times-table-star'])
     expect(imported.owned).not.toContain('acc-crown')
@@ -148,7 +150,7 @@ describe('export a import', () => {
       parentPinHash: null,
     }
     const imported = importProgress({ ...createDefaultSave(), parentPinHash: hashPin('1234') }, JSON.stringify(v1))!
-    expect(imported.saveVersion).toBe(3)
+    expect(imported.saveVersion).toBe(4)
     expect(imported.gold).toBe(40)
     expect(imported.settings.topics.multiplication).toEqual(['easy'])
     expect(imported.parentPinHash).toBe(hashPin('1234'))
