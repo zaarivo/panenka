@@ -10,7 +10,7 @@ import {
   type TopicProgress,
 } from '../../lib/difficulty'
 import { rollChestReward } from '../../lib/economy'
-import { generateProblem, isCorrectAnswer, pickTopic, type CompareSign, type Problem } from '../../lib/mathGenerator'
+import { formatAnswer, generateProblem, isCorrectAnswer, pickTopic, type CompareSign, type Problem } from '../../lib/mathGenerator'
 import { isSuccess } from '../../lib/practice'
 import { playChest, playCoin } from '../../lib/sound'
 import { ActiveStopwatch } from '../../lib/stopwatch'
@@ -217,6 +217,8 @@ export function AcademyScreen({
   }
 
   const isComparison = problem.kind === 'compare'
+  const isTime = problem.kind === 'time'
+  const needsMinutes = isTime && input.length > 0 && input.length < 3
 
   return (
     <div className="flex h-full flex-col gap-2 overflow-y-auto p-3">
@@ -282,7 +284,7 @@ export function AcademyScreen({
         )}
         {phase === 'skipped' && (
           <p className="font-bold text-violet-600">
-            Nevadí! Správně je {problem.answer}.
+            Nevadí! Správně je {formatAnswer(problem)}.
             {easier && <span className="block text-base font-normal text-violet-500">Další příklad bude o kousek lehčí.</span>}
           </p>
         )}
@@ -293,7 +295,9 @@ export function AcademyScreen({
           </div>
         )}
         {phase === 'answering' && !hintVisible && (
-          <p className="text-violet-400">{isComparison ? 'Vyber správné znaménko.' : 'Spočítej a klepni na Hotovo.'}</p>
+          <p className="text-violet-400">
+            {isComparison ? 'Vyber správné znaménko.' : needsMinutes ? 'Napiš i minuty, třeba 5:00.' : 'Spočítej a klepni na Hotovo.'}
+          </p>
         )}
       </div>
 
@@ -334,6 +338,8 @@ export function AcademyScreen({
             }}
             onSubmit={() => submit(Number(input))}
             disabled={phase === 'correct' || phase === 'skipped'}
+            maxDigits={isTime ? 4 : 3}
+            minDigits={isTime ? 3 : 1}
           />
         )}
       </div>

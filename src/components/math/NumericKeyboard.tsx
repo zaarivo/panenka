@@ -6,6 +6,8 @@ interface NumericKeyboardProps {
   onSubmit: () => void
   disabled?: boolean
   maxDigits?: number
+  /** Nejméně číslic, aby šlo zmáčknout Hotovo (u času 3 — hodiny a minuty). */
+  minDigits?: number
   submitLabel?: string
   /** Pro PIN: povolí úvodní nulu (např. 0123). */
   allowLeadingZero?: boolean
@@ -17,6 +19,7 @@ export function NumericKeyboard({
   onSubmit,
   disabled,
   maxDigits = 3,
+  minDigits = 1,
   submitLabel = 'Hotovo',
   allowLeadingZero = false,
 }: NumericKeyboardProps) {
@@ -48,7 +51,7 @@ export function NumericKeyboard({
       </button>
       <button
         type="button"
-        disabled={disabled || value === ''}
+        disabled={disabled || value.length < minDigits}
         onClick={onSubmit}
         className={`${key} bg-pink-400 text-xl text-white`}
       >

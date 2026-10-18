@@ -86,7 +86,7 @@ vydělané řešením matematických příkladů.
 ### 3. Matematická akademie
 - Generátor příkladů kódem (ne pevný seznam), výsledky počítá kód, vždy ≥ 0
 - Bez opakování stejného příkladu po sobě
-- 6 kategorií úloh, každá s obtížnostmi lehké / střední / těžké (viz tabulka níže, včetně slovních úloh)
+- 8 kategorií úloh, každá s obtížnostmi lehké / střední / těžké (viz tabulka níže, včetně slovních úloh)
 - Adaptivní obtížnost zvlášť pro každou kategorii: po 5 správných v řadě → těžší, po 2 chybách → lehčí,
   jen mezi obtížnostmi, které rodič zaškrtl
 - Odměna: +5 zlaťáků (lehké, střední), +8 (těžké) (schváleno, dřív 10/15)
@@ -114,8 +114,15 @@ vydělané řešením matematických příkladů.
 | Chybějící číslo (`missingNumber`) | do 10 | do 20 | do 100 |
 | Porovnávání (`comparison`) | do 10 | do 20 | do 100 |
 | Slovní úlohy (`wordProblems`) | ± do 20 | ± do 100 | násobilka |
+| Peníze (`money`) | ceny 1–10 Kč, ≤ 2 kusy, do 20 Kč; zbyde z 20 | 2–3 věci po kusu, ceny do 50, do 100 Kč; zbyde ze 100 | ceny 1–10 Kč × 2–5 kusů, do 100 Kč; zbyde ze 100 |
+| Hodiny (`clock`) | celé a půl (slovy i ciferník) | + čtvrt a třičtvrtě | ciferník po 5 minutách |
 
 - V kódu `topic` (ne `category` — to je druh oblečení), obtížnosti `easy/medium/hard`, v UI slovy.
+- Peníze a Hodiny (schváleno, návrh `docs/superpowers/specs/2026-10-18-penize-hodiny-design.md`) jsou
+  výchozí vypnuté (`defaultTopics`), i v uložení, kde chybí. Logika `lib/money.ts` (kolik stojí / kolik
+  zbyde, štítky cen) a `lib/clock.ts` (čas slovy „půl 6“, „čtvrt na 3“, „třičtvrtě na 5“, hodiny 1–12).
+- Čas je příklad `kind: 'time'` s odpovědí `hodiny × 100 + minuty` (4:45 → 445); dítě píše číslice,
+  dvojtečka se zobrazí před posledními dvěma, „Hotovo“ až od 3 číslic. Ciferník `ClockFace`.
 - Zaškrtnutí smí mít mezery (lehké + těžké); posun skočí na nejbližší zaškrtnutou (`stepTier`).
 - Truhla je společná: 5 správně v řadě napříč kategoriemi (`updateChestStreak`).
 - Přechod: sčítání = jednotky dají víc než 10; odčítání = jednotky menšence nestačí.
@@ -129,7 +136,7 @@ vydělané řešením matematických příkladů.
   Testy používají deterministické RNG.
 
 #### Úspěšnost a doporučení pro rodiče (schváleno)
-- Úspěch = správně napoprvé a v limitu (30 s, slovní úlohy 90 s); čas jen při otevřené Akademii
+- Úspěch = správně napoprvé a v limitu (30 s, slovní úlohy 90 s, peníze a hodiny 60 s); čas jen při otevřené Akademii
   a viditelné hře (`ActiveStopwatch`). Dítě o tom neví — zlaťáky i pochvala beze změny.
 - Pro každou kategorii × obtížnost posledních 20 výsledků (`save.practice`), doporučení od 10.
 - ≥ 95 %: na nejtěžší zaškrtnuté nabídne přidat těžší, jinak odebrat tuto; < 25 %: odebrat tuto,
@@ -137,7 +144,7 @@ vydělané řešením matematických příkladů.
 - Odškrtnutím obtížnosti se smaže její historie. Logika `lib/practice.ts`, UI `PracticePicker`.
 
 ### 4. Medaile (dřív Síň slávy, schváleno, návrh `docs/superpowers/specs/2026-10-18-medaile-design.md`)
-- Pro každou ze 6 kategorií úloh bronzová / stříbrná / zlatá medaile za 10 / 100 / 200 správných
+- Pro každou z 8 kategorií úloh bronzová / stříbrná / zlatá medaile za 10 / 100 / 200 správných
   v kategorii (`stats.correctByTopic`, počítá se i správně na další pokus, přeskočený ne). Medaile nedávají
   zlaťáky. Logika `lib/medals.ts` (`MEDALS`, `awardMedals`, `nextMedal`).
 - Obrazovka: karta pro každou kategorii (3 medaile + „do stříbrné 42/100“, po všech „Všechny medaile!“),

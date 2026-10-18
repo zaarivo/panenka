@@ -1,4 +1,6 @@
+import { formatTimeDigits } from '../../lib/clock'
 import type { Problem } from '../../lib/mathGenerator'
+import { ClockFace } from './ClockFace'
 
 interface ProblemCardProps {
   problem: Problem
@@ -15,6 +17,8 @@ const SLOT_STYLES: Record<ProblemCardProps['state'], string> = {
 
 export function ProblemCard({ problem, answer, state }: ProblemCardProps) {
   const slotStyle = SLOT_STYLES[state]
+  const shown = problem.kind === 'time' ? formatTimeDigits(answer) : answer
+  const storyAlign = problem.topic === 'clock' ? 'text-center' : 'text-left'
 
   return (
     <div
@@ -22,23 +26,38 @@ export function ProblemCard({ problem, answer, state }: ProblemCardProps) {
       aria-live="polite"
     >
       {problem.story && (
-        <p className="w-full text-left text-lg leading-snug font-semibold text-violet-800" data-story>
+        <p className={`w-full ${storyAlign} text-lg leading-snug font-semibold text-violet-800`} data-story>
           {problem.story}
         </p>
+      )}
+      {problem.tags && (
+        <div className="flex w-full flex-wrap gap-2">
+          {problem.tags.map((tag) => (
+            <span key={tag} className="rounded-xl bg-amber-100 px-2 py-0.5 text-base font-semibold text-amber-800">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+      {problem.clock && (
+        <div className="flex w-full justify-center">
+          <ClockFace hours={problem.clock.hours} minutes={problem.clock.minutes} className="h-40 w-40" />
+        </div>
       )}
       {problem.prompt.split(' ').map((token, index) =>
         token === '?' ? (
           <span
             key={index}
             className={`inline-flex h-16 min-w-16 items-center justify-center rounded-2xl border-4 border-dashed px-2 ${slotStyle}`}
-            aria-label={answer ? `tvoje odpověď ${answer}` : 'sem patří odpověď'}
+            aria-label={answer ? `tvoje odpověď ${shown}` : 'sem patří odpověď'}
           >
-            {answer}
+            {shown}
           </span>
         ) : (
           <span key={index}>{token}</span>
         ),
       )}
+      {problem.unit && <span>{problem.unit}</span>}
     </div>
   )
 }
