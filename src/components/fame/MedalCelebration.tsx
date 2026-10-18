@@ -1,10 +1,21 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MEDAL_NAMES, type Medal } from '../../lib/medals'
 import { playFanfare } from '../../lib/sound'
 import { TOPIC_LABELS } from '../../lib/topics'
 import { MedalIcon } from './MedalIcon'
 
 const CONFETTI_COLORS = ['#f472b6', '#facc15', '#60a5fa', '#a78bfa', '#34d399']
+
+/** Za jak dlouho je tlačítko „Hurá!“ vidět (zpoždění 1,4 s + většina náběhu) — dřív nejde zmáčknout. */
+const BUTTON_READY_MS = 1700
+
+const prefersReducedMotion = () => {
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  } catch {
+    return false
+  }
+}
 
 interface MedalCelebrationProps {
   medal: Medal
@@ -15,6 +26,8 @@ interface MedalCelebrationProps {
 /** Celoobrazovková oslava nové medaile: medaile spadne, za ní paprsky, padají konfety. */
 export function MedalCelebration({ medal, soundOn, onClose }: MedalCelebrationProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
+  // Dokud tlačítko není vidět, nejde zavřít — jinak by ho dítě omylem ťuklo prstem z klávesnice.
+  const [ready, setReady] = useState(prefersReducedMotion)
   const title = `${MEDAL_NAMES[medal.tier]}!`
   const confetti = useMemo(
     () =>
@@ -31,11 +44,18 @@ export function MedalCelebration({ medal, soundOn, onClose }: MedalCelebrationPr
   }, [medal.id, soundOn])
 
   useEffect(() => {
+    if (ready) return
+    const timer = setTimeout(() => setReady(true), BUTTON_READY_MS)
+    return () => clearTimeout(timer)
+  }, [ready])
+
+  useEffect(() => {
+    if (!ready) return
     buttonRef.current?.focus()
     const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [ready, onClose])
 
   return (
     <div
@@ -66,6 +86,7 @@ export function MedalCelebration({ medal, soundOn, onClose }: MedalCelebrationPr
           ref={buttonRef}
           type="button"
           onClick={onClose}
+          disabled={!ready}
           className="animate-appear min-h-14 rounded-full bg-pink-500 px-10 text-xl font-bold text-white shadow-md [animation-delay:1.4s] active:scale-95 motion-reduce:animate-none"
         >
           Hurá!
