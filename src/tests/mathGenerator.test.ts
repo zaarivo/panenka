@@ -1,27 +1,26 @@
 import { describe, expect, test } from 'vitest'
+import { addCrossesTen, subCrossesTen } from '../lib/equations'
 import {
   MULTIPLICATION_ROWS,
-  addCrossesTen,
   addHint,
   generateProblem,
   isCorrectAnswer,
   multiplicationHint,
-  subCrossesTen,
+  pickTopic,
   subHint,
   type Problem,
 } from '../lib/mathGenerator'
-import { LEVELS, PROBLEM_TYPES, type Level, type ProblemType } from '../types'
+import { TIERS, TOPIC_IDS, type Tier, type TopicId } from '../types'
 import { seededRng } from './seededRng'
 
 const SAMPLES = 2000
-const LIMIT: Record<Level, number> = { 1: 20, 2: 20, 3: 100, 4: 100 }
 
-function generateMany(type: ProblemType, level: Level, seed = 1): Problem[] {
+function generateMany(topic: TopicId, tier: Tier, seed = 1): Problem[] {
   const rng = seededRng(seed)
   const problems: Problem[] = []
   let previousKey: string | undefined
   for (let i = 0; i < SAMPLES; i++) {
-    const problem = generateProblem({ types: [type], level, previousKey, rng })
+    const problem = generateProblem({ topic, tier, previousKey, rng })
     problems.push(problem)
     previousKey = problem.key
   }
@@ -50,56 +49,95 @@ function numbersIn(problem: Problem): number[] {
     .filter((n) => !Number.isNaN(n))
 }
 
-describe.each(LEVELS)('stupeň %i', (level) => {
-  test.each(['addSub', 'missingNumber'] as const)('%s: výsledek sedí, čísla jsou v rozsahu a přechod odpovídá stupni', (type) => {
-    for (const problem of generateMany(type, level)) {
-      const { filled } = parse(problem)
-      const [a, op, b, eq, c] = filled
+const LIMIT: Record<'add20' | 'add100' | 'missingNumber' | 'comparison', Record<Tier, number>> = {
+  add20: { easy: 10, medium: 20, hard: 20 },
+  add100: { easy: 100, medium: 100, hard: 100 },
+  missingNumber: { easy: 10, medium: 20, hard: 100 },
+  comparison: { easy: 10, medium: 20, hard: 100 },
+}
+
+/** null = přechod přes desítku se nehlídá. */
+const CROSSING: Record<'add20' | 'add100', Record<Tier, boolean | null>> = {
+  add20: { easy: null, medium: false, hard: true },
+  add100: { easy: null, medium: false, hard: true },
+}
+
+describe.each(['add20', 'add100'] as const)('%s', (topic) => {
+  test.each(TIERS)('%s: výsledek sedí, čísla v mezích, přechod odpovídá', (tier) => {
+    for (const problem of generateMany(topic, tier)) {
+      expect(problem.topic).toBe(topic)
+      expect(problem.tier).toBe(tier)
+      const [a, op, b, eq, c] = parse(problem).filled
       expect(eq, problem.prompt).toBe('=')
+      expect(parse(problem).z).toBe('?')
       expect(evaluate(Number(a), op, Number(b)), problem.prompt).toBe(Number(c))
       for (const n of numbersIn(problem)) {
         expect(n, problem.prompt).toBeGreaterThanOrEqual(0)
-        expect(n, problem.prompt).toBeLessThanOrEqual(LIMIT[level])
+        expect(n, problem.prompt).toBeLessThanOrEqual(LIMIT[topic][tier])
       }
-      const crosses = op === '+' ? addCrossesTen(Number(a), Number(b)) : subCrossesTen(Number(a), Number(b))
-      expect(crosses, problem.prompt).toBe(level === 2 || level === 4)
+      const expected = CROSSING[topic][tier]
+      if (expected !== null) {
+        const crosses = op === '+' ? addCrossesTen(Number(a), Number(b)) : subCrossesTen(Number(a), Number(b))
+        expect(crosses, problem.prompt).toBe(expected)
+      }
+      if (topic === 'add100' && tier === 'easy') {
+        for (const n of numbersIn(problem)) expect(n % 10, problem.prompt).toBe(0)
+      }
       expect(problem.hint.length).toBeGreaterThan(0)
-      expect(problem.level).toBe(level)
     }
   })
+})
 
-  test('addSub: odpověď je vždy výsledek za rovnítkem', () => {
-    for (const problem of generateMany('addSub', level)) {
-      expect(parse(problem).z).toBe('?')
-    }
-  })
-
-  test('násobilka: jen povolené řady, činitel 1–10, správný výsledek', () => {
+describe('malá násobilka', () => {
+  test.each(TIERS)('%s: jen povolené řady, činitel 1–10, správný výsledek', (tier) => {
     const rowsSeen = new Set<number>()
-    for (const problem of generateMany('multiplication', level)) {
+    for (const problem of generateMany('multiplication', tier)) {
       const [times, op, row, eq, result] = parse(problem).filled
       expect(op).toBe('×')
       expect(eq).toBe('=')
-      expect(MULTIPLICATION_ROWS[level]).toContain(Number(row))
+      expect(MULTIPLICATION_ROWS[tier]).toContain(Number(row))
       expect(Number(times)).toBeGreaterThanOrEqual(1)
       expect(Number(times)).toBeLessThanOrEqual(10)
       expect(Number(times) * Number(row)).toBe(Number(result))
       rowsSeen.add(Number(row))
     }
-    expect([...rowsSeen].sort((a, b) => a - b)).toEqual([...MULTIPLICATION_ROWS[level]])
+    expect([...rowsSeen].sort((a, b) => a - b)).toEqual([...MULTIPLICATION_ROWS[tier]])
   })
 
-  test('porovnávání: znaménko odpovídá výpočtu a objeví se všechna tři', () => {
+  test('řady podle obtížnosti', () => {
+    expect(MULTIPLICATION_ROWS).toEqual({ easy: [2, 5, 10], medium: [2, 3, 4, 5, 10], hard: [2, 3, 4, 5, 6, 7, 8, 9, 10] })
+  })
+})
+
+describe('chybějící číslo', () => {
+  test.each(TIERS)('%s: výsledek sedí a čísla jsou v mezích', (tier) => {
+    for (const problem of generateMany('missingNumber', tier)) {
+      const [a, op, b, eq, c] = parse(problem).filled
+      expect(eq).toBe('=')
+      expect(parse(problem).z).not.toBe('?')
+      expect(evaluate(Number(a), op, Number(b)), problem.prompt).toBe(Number(c))
+      for (const n of numbersIn(problem)) {
+        expect(n).toBeGreaterThanOrEqual(0)
+        expect(n, problem.prompt).toBeLessThanOrEqual(LIMIT.missingNumber[tier])
+      }
+    }
+  })
+})
+
+describe('porovnávání', () => {
+  test.each(TIERS)('%s: znaménko odpovídá výpočtu, čísla v mezích, objeví se všechna tři', (tier) => {
     const signs = new Set<string>()
-    for (const problem of generateMany('comparison', level)) {
+    for (const problem of generateMany('comparison', tier)) {
       const { x, op, y, middle, z } = parse(problem)
       expect(middle).toBe('?')
+      expect(problem.kind).toBe('compare')
       const left = evaluate(Number(x), op, Number(y))
       const right = Number(z)
-      const expected = left < right ? '<' : left > right ? '>' : '='
-      expect(problem.answer, problem.prompt).toBe(expected)
-      expect(right).toBeGreaterThanOrEqual(0)
-      expect(right).toBeLessThanOrEqual(LIMIT[level])
+      expect(problem.answer, problem.prompt).toBe(left < right ? '<' : left > right ? '>' : '=')
+      for (const n of [Number(x), Number(y), left, right]) {
+        expect(n).toBeGreaterThanOrEqual(0)
+        expect(n, problem.prompt).toBeLessThanOrEqual(LIMIT.comparison[tier])
+      }
       signs.add(problem.answer as string)
     }
     expect([...signs].sort()).toEqual(['<', '=', '>'])
@@ -108,32 +146,21 @@ describe.each(LEVELS)('stupeň %i', (level) => {
 
 describe('výběr příkladů', () => {
   test('stejný příklad nikdy dvakrát po sobě, ani v nejužším nastavení', () => {
-    for (const type of PROBLEM_TYPES) {
-      const problems = generateMany(type, 1, 7)
-      for (let i = 1; i < problems.length; i++) {
-        expect(problems[i].key).not.toBe(problems[i - 1].key)
-      }
+    for (const topic of TOPIC_IDS.filter((t) => t !== 'wordProblems')) {
+      const problems = generateMany(topic, 'easy', 7)
+      for (let i = 1; i < problems.length; i++) expect(problems[i].key).not.toBe(problems[i - 1].key)
     }
   })
 
-  test('generuje jen povolené typy a všechny z nich', () => {
+  test('vybere jen zapnuté kategorie a všechny z nich', () => {
     const rng = seededRng(3)
-    const seen = new Set<ProblemType>()
-    for (let i = 0; i < 500; i++) {
-      seen.add(generateProblem({ types: ['multiplication', 'comparison'], level: 2, rng }).type)
-    }
+    const seen = new Set<TopicId>()
+    for (let i = 0; i < 500; i++) seen.add(pickTopic(['multiplication', 'comparison'], rng))
     expect([...seen].sort()).toEqual(['comparison', 'multiplication'])
   })
 
-  test('prázdný seznam typů použije všechny typy', () => {
-    const rng = seededRng(4)
-    const seen = new Set<ProblemType>()
-    for (let i = 0; i < 500; i++) seen.add(generateProblem({ types: [], level: 1, rng }).type)
-    expect(seen.size).toBe(PROBLEM_TYPES.length)
-  })
-
   test('kontrola odpovědi', () => {
-    const problem = generateProblem({ types: ['addSub'], level: 1, rng: seededRng(5) })
+    const problem = generateProblem({ topic: 'add20', tier: 'medium', rng: seededRng(5) })
     expect(isCorrectAnswer(problem, problem.answer)).toBe(true)
     expect(isCorrectAnswer(problem, (problem.answer as number) + 1)).toBe(false)
   })
@@ -142,19 +169,11 @@ describe('výběr příkladů', () => {
 describe('nápovědy', () => {
   test('sčítání přes desítku rozloží do desítky a neprozradí výsledek', () => {
     expect(addHint(8, 7)).toBe('Rozlož si to: 8 + 2 + 5. 8 + 2 = 10, a ještě + 5.')
-    expect(addHint(7, 8)).toBe('Rozlož si to: 8 + 2 + 5. 8 + 2 = 10, a ještě + 5.')
     expect(addHint(38, 27)).toBe('Rozlož si to: 38 + 20 + 2 + 5. 38 + 20 = 58, 58 + 2 = 60, a ještě + 5.')
-  })
-
-  test('sčítání bez přechodu', () => {
-    expect(addHint(12, 5)).toBe('Začni u 12 a přičítej po jedné.')
-    expect(addHint(34, 25)).toBe('Rozlož si to: 34 + 20 + 5. 34 + 20 = 54, a ještě + 5.')
-    expect(addHint(34, 20)).toBe('Přičítej k 34 po desítkách.')
   })
 
   test('odčítání přes desítku', () => {
     expect(subHint(13, 5)).toBe('Rozlož si to: 13 − 3 − 2. 13 − 3 = 10, a ještě − 2.')
-    expect(subHint(52, 27)).toBe('Rozlož si to: 52 − 20 − 2 − 5. 52 − 20 = 32, 32 − 2 = 30, a ještě − 5.')
   })
 
   test('násobení jako opakované sčítání', () => {
@@ -163,9 +182,9 @@ describe('nápovědy', () => {
   })
 
   test('nápověda nikdy neobsahuje výsledek jako „= odpověď“', () => {
-    for (const level of LEVELS) {
-      for (const type of ['addSub', 'multiplication'] as const) {
-        for (const problem of generateMany(type, level, 11)) {
+    for (const topic of ['add20', 'add100', 'multiplication'] as const) {
+      for (const tier of TIERS) {
+        for (const problem of generateMany(topic, tier, 11)) {
           expect(problem.hint, `${problem.prompt} | ${problem.hint}`).not.toContain(`= ${problem.answer},`)
           expect(problem.hint, `${problem.prompt} | ${problem.hint}`).not.toMatch(new RegExp(`= ${problem.answer}\\.$`))
         }

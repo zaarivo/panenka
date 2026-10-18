@@ -1,99 +1,36 @@
-import { PROBLEM_TYPES, type Level, type ProblemType, type Rng } from '../types'
+import type { Rng, Tier, TopicId } from '../types'
+import { EQUATION_RULES, generateEquation, pick, randInt, type AddSubRule, type Equation } from './equations'
 
 export type CompareSign = '<' | '>' | '='
 
 interface ProblemBase {
-  level: Level
-  /** Tokeny oddělené mezerou, `?` označuje místo pro odpověď, např. „7 + ? = 15“. */
+  topic: TopicId
+  tier: Tier
+  /** Tokeny oddělené mezerou, `?` označuje místo pro odpověď, např. „7 + ? = 15“. U slovní úlohy jen „?“. */
   prompt: string
   hint: string
   key: string
+  /** Text slovní úlohy. */
+  story?: string
 }
 
-export type NumberProblem = ProblemBase & {
-  type: Exclude<ProblemType, 'comparison'>
-  answer: number
-}
-
-export type ComparisonProblem = ProblemBase & {
-  type: 'comparison'
-  answer: CompareSign
-}
-
+export type NumberProblem = ProblemBase & { kind: 'number'; answer: number }
+export type ComparisonProblem = ProblemBase & { kind: 'compare'; answer: CompareSign }
 export type Problem = NumberProblem | ComparisonProblem
+export type ProblemDraft = Omit<NumberProblem, 'key'> | Omit<ComparisonProblem, 'key'>
 
 export const MINUS = '−'
 export const TIMES = '×'
 
-interface Range {
-  min: number
-  max: number
-}
-
-interface AddSubRule {
-  limit: number
-  crossing: boolean
-  addA: Range
-  addB: Range
-  subA: Range
-  subB: Range
-}
-
-/** Stupně: 1 = do 20 bez přechodu, 2 = do 20 s přechodem, 3 = do 100 bez přechodu, 4 = do 100 s přechodem. */
-export const ADD_SUB_RULES: Record<Level, AddSubRule> = {
-  1: { limit: 20, crossing: false, addA: { min: 1, max: 19 }, addB: { min: 1, max: 19 }, subA: { min: 2, max: 20 }, subB: { min: 1, max: 19 } },
-  2: { limit: 20, crossing: true, addA: { min: 2, max: 9 }, addB: { min: 2, max: 9 }, subA: { min: 11, max: 20 }, subB: { min: 2, max: 9 } },
-  3: { limit: 100, crossing: false, addA: { min: 10, max: 89 }, addB: { min: 2, max: 89 }, subA: { min: 20, max: 99 }, subB: { min: 2, max: 89 } },
-  4: { limit: 100, crossing: true, addA: { min: 11, max: 89 }, addB: { min: 2, max: 89 }, subA: { min: 20, max: 99 }, subB: { min: 2, max: 89 } },
-}
-
-/** Řady malé násobilky povolené na jednotlivých stupních (přibývají). */
-export const MULTIPLICATION_ROWS: Record<Level, readonly number[]> = {
-  1: [2, 5, 10],
-  2: [2, 3, 4, 5, 10],
-  3: [2, 3, 4, 5, 6, 7, 10],
-  4: [2, 3, 4, 5, 6, 7, 8, 9, 10],
+export const MULTIPLICATION_ROWS: Record<Tier, readonly number[]> = {
+  easy: [2, 5, 10],
+  medium: [2, 3, 4, 5, 10],
+  hard: [2, 3, 4, 5, 6, 7, 8, 9, 10],
 }
 
 const ones = (n: number) => n % 10
 
-/** Přechod přes desítku: u sčítání jednotky dají víc než 10, u odčítání jednotky nestačí. */
-export const addCrossesTen = (a: number, b: number) => ones(a) + ones(b) > 10
-export const subCrossesTen = (a: number, b: number) => ones(a) < ones(b)
-
-function randInt(rng: Rng, { min, max }: Range): number {
-  return min + Math.floor(rng() * (max - min + 1))
-}
-
-function pick<T>(rng: Rng, items: readonly T[]): T {
-  return items[Math.floor(rng() * items.length)]
-}
-
-interface Equation {
-  a: number
-  op: '+' | '-'
-  b: number
-  c: number
-}
-
-function generateEquation(rng: Rng, level: Level): Equation {
-  const rule = ADD_SUB_RULES[level]
-  const op = rng() < 0.5 ? '+' : '-'
-  for (let attempt = 0; attempt < 10_000; attempt++) {
-    if (op === '+') {
-      const a = randInt(rng, rule.addA)
-      const b = randInt(rng, rule.addB)
-      if (a + b <= rule.limit && addCrossesTen(a, b) === rule.crossing) return { a, op, b, c: a + b }
-    } else {
-      const a = randInt(rng, rule.subA)
-      const b = randInt(rng, rule.subB)
-      if (b < a && subCrossesTen(a, b) === rule.crossing) return { a, op, b, c: a - b }
-    }
-  }
-  throw new Error(`Nepodařilo se vygenerovat příklad pro stupeň ${level}`)
-}
-
-const opSymbol = (op: Equation['op']) => (op === '+' ? '+' : MINUS)
+export const opSymbol = (op: Equation['op']) => (op === '+' ? '+' : MINUS)
 
 /** Kroky rozkladu bez posledního výsledku, aby nápověda neprozradila odpověď. */
 function stepsWithoutResult(start: number, parts: number[], op: Equation['op']): string {
@@ -148,36 +85,47 @@ export function multiplicationHint(times: number, row: number): string {
   return `${times} ${TIMES} ${row} je ${times}krát ${row}. Víš, že 5 ${TIMES} ${row} = ${5 * row}, přičti ještě ${repeat(times - 5)}.`
 }
 
-function buildAddSub(rng: Rng, level: Level): NumberProblem {
-  const { a, op, b, c } = generateEquation(rng, level)
-  return {
-    type: 'addSub',
-    level,
-    prompt: `${a} ${opSymbol(op)} ${b} = ?`,
-    answer: c,
-    hint: op === '+' ? addHint(a, b) : subHint(a, b),
-    key: '',
+/** Rovnice pro chybějící číslo, porovnávání a slovní úlohy: lehké do 10, střední do 20, těžké do 100. */
+export function mixedEquationRule(rng: Rng, tier: Tier): AddSubRule {
+  if (tier === 'easy') return EQUATION_RULES.add20.easy
+  const source = tier === 'medium' ? EQUATION_RULES.add20 : EQUATION_RULES.add100
+  return rng() < 0.5 ? source.medium : source.hard
+}
+
+const COMPARISON_LIMIT: Record<Tier, number> = { easy: 10, medium: 20, hard: 100 }
+
+function buildAddSub(source: 'add20' | 'add100') {
+  return (rng: Rng, tier: Tier): ProblemDraft => {
+    const { a, op, b, c } = generateEquation(rng, EQUATION_RULES[source][tier])
+    return {
+      kind: 'number',
+      topic: source,
+      tier,
+      prompt: `${a} ${opSymbol(op)} ${b} = ?`,
+      answer: c,
+      hint: op === '+' ? addHint(a, b) : subHint(a, b),
+    }
   }
 }
 
-function buildMultiplication(rng: Rng, level: Level): NumberProblem {
-  const row = pick(rng, MULTIPLICATION_ROWS[level])
+function buildMultiplication(rng: Rng, tier: Tier): ProblemDraft {
+  const row = pick(rng, MULTIPLICATION_ROWS[tier])
   const times = randInt(rng, { min: 1, max: 10 })
   return {
-    type: 'multiplication',
-    level,
+    kind: 'number',
+    topic: 'multiplication',
+    tier,
     prompt: `${times} ${TIMES} ${row} = ?`,
     answer: times * row,
     hint: multiplicationHint(times, row),
-    key: '',
   }
 }
 
-function buildMissingNumber(rng: Rng, level: Level): NumberProblem {
-  const { a, op, b, c } = generateEquation(rng, level)
+function buildMissingNumber(rng: Rng, tier: Tier): ProblemDraft {
+  const { a, op, b, c } = generateEquation(rng, mixedEquationRule(rng, tier))
   const symbol = opSymbol(op)
   const hideFirst = rng() < 0.5
-  const base = { type: 'missingNumber' as const, level, key: '' }
+  const base = { kind: 'number' as const, topic: 'missingNumber' as const, tier }
 
   if (op === '+') {
     return hideFirst
@@ -189,42 +137,49 @@ function buildMissingNumber(rng: Rng, level: Level): NumberProblem {
     : { ...base, prompt: `${a} ${symbol} ? = ${c}`, answer: b, hint: `Kolik musíš ubrat z ${a}, aby zbylo ${c}? Spočítej ${a} ${MINUS} ${c}.` }
 }
 
-function buildComparison(rng: Rng, level: Level): ComparisonProblem {
-  const { a, op, b, c } = generateEquation(rng, level)
+function buildComparison(rng: Rng, tier: Tier): ProblemDraft {
+  const { a, op, b, c } = generateEquation(rng, mixedEquationRule(rng, tier))
   const shift = rng() < 1 / 3 ? 0 : pick(rng, [-3, -2, -1, 1, 2, 3])
-  const other = Math.min(Math.max(c + shift, 0), ADD_SUB_RULES[level].limit)
+  const other = Math.min(Math.max(c + shift, 0), COMPARISON_LIMIT[tier])
   const answer: CompareSign = c < other ? '<' : c > other ? '>' : '='
   return {
-    type: 'comparison',
-    level,
+    kind: 'compare',
+    topic: 'comparison',
+    tier,
     prompt: `${a} ${opSymbol(op)} ${b} ? ${other}`,
     answer,
     hint: `Nejdřív spočítej ${a} ${opSymbol(op)} ${b}, potom porovnej s ${other}.`,
-    key: '',
   }
 }
 
-const BUILDERS: Record<ProblemType, (rng: Rng, level: Level) => Problem> = {
-  addSub: buildAddSub,
+const BUILDERS: Record<TopicId, (rng: Rng, tier: Tier) => ProblemDraft> = {
+  add20: buildAddSub('add20'),
+  add100: buildAddSub('add100'),
   multiplication: buildMultiplication,
   missingNumber: buildMissingNumber,
   comparison: buildComparison,
+  wordProblems: () => {
+    throw new Error('Slovní úlohy přibudou v dalším kroku')
+  },
+}
+
+export function pickTopic(enabled: readonly TopicId[], rng: Rng = Math.random): TopicId {
+  return pick(rng, enabled)
 }
 
 export interface GenerateOptions {
-  types: readonly ProblemType[]
-  level: Level
+  topic: TopicId
+  tier: Tier
   /** Klíč předchozího příkladu — nový příklad nebude stejný. */
   previousKey?: string
   rng?: Rng
 }
 
-export function generateProblem({ types, level, previousKey, rng = Math.random }: GenerateOptions): Problem {
-  const pool = types.length > 0 ? types : PROBLEM_TYPES
+export function generateProblem({ topic, tier, previousKey, rng = Math.random }: GenerateOptions): Problem {
   let problem: Problem
   do {
-    const built = BUILDERS[pick(rng, pool)](rng, level)
-    problem = { ...built, key: `${built.type}|${built.prompt}` }
+    const draft = BUILDERS[topic](rng, tier)
+    problem = { ...draft, key: `${topic}|${draft.story ?? ''}|${draft.prompt}` } as Problem
   } while (problem.key === previousKey)
   return problem
 }
