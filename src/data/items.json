@@ -39,6 +39,22 @@
   { "id": "acc-glasses", "name": "Kulaté brýle", "category": "accessory", "price": 20, "layer": "accessory", "asset": "acc-glasses", "slot": "face" },
   { "id": "acc-necklace", "name": "Perlový náhrdelník", "category": "accessory", "price": 25, "layer": "accessory", "asset": "acc-necklace", "slot": "neck" },
   { "id": "acc-bag", "name": "Kabelka se srdíčkem", "category": "accessory", "price": 30, "layer": "accessory", "asset": "acc-bag", "slot": "hand" },
+  { "id": "acc-bow-blue", "name": "Modrá mašle", "category": "accessory", "price": 20, "layer": "accessory", "asset": "acc-bow-blue", "slot": "head" },
+  { "id": "acc-headband-pink", "name": "Růžová čelenka", "category": "accessory", "price": 25, "layer": "accessory", "asset": "acc-headband-pink", "slot": "head" },
+  { "id": "acc-headband-blue", "name": "Modrá čelenka", "category": "accessory", "price": 25, "layer": "accessory", "asset": "acc-headband-blue", "slot": "head" },
+  { "id": "acc-flower-clip", "name": "Sponka s kytičkou", "category": "accessory", "price": 30, "layer": "accessory", "asset": "acc-flower-clip", "slot": "head" },
+  { "id": "acc-beret-red", "name": "Červený baret", "category": "accessory", "price": 45, "layer": "accessory", "asset": "acc-beret-red", "slot": "head" },
+  { "id": "acc-hat-straw", "name": "Slaměný klobouček", "category": "accessory", "price": 55, "layer": "accessory", "asset": "acc-hat-straw", "slot": "head" },
+  { "id": "acc-sunglasses", "name": "Sluneční brýle", "category": "accessory", "price": 40, "layer": "accessory", "asset": "acc-sunglasses", "slot": "face" },
+  { "id": "acc-glasses-hearts", "name": "Srdíčkové brýle", "category": "accessory", "price": 50, "layer": "accessory", "asset": "acc-glasses-hearts", "slot": "face" },
+  { "id": "acc-scarf-red", "name": "Červená šála", "category": "accessory", "price": 45, "layer": "accessory", "asset": "acc-scarf-red", "slot": "neck" },
+  { "id": "acc-scarf-stripes", "name": "Pruhovaná šála", "category": "accessory", "price": 50, "layer": "accessory", "asset": "acc-scarf-stripes", "slot": "neck" },
+  { "id": "acc-pendant-heart", "name": "Přívěsek se srdíčkem", "category": "accessory", "price": 60, "layer": "accessory", "asset": "acc-pendant-heart", "slot": "neck" },
+  { "id": "acc-balloon", "name": "Balónek", "category": "accessory", "price": 35, "layer": "accessory", "asset": "acc-balloon", "slot": "hand" },
+  { "id": "acc-bouquet", "name": "Kytička", "category": "accessory", "price": 40, "layer": "accessory", "asset": "acc-bouquet", "slot": "hand" },
+  { "id": "acc-umbrella", "name": "Deštník", "category": "accessory", "price": 65, "layer": "accessory", "asset": "acc-umbrella", "slot": "hand" },
+  { "id": "acc-earrings-pearl", "name": "Perlové náušnice", "category": "accessory", "price": 70, "layer": "accessory", "asset": "acc-earrings-pearl", "slot": "ears" },
+  { "id": "acc-earrings-heart", "name": "Srdíčkové náušnice", "category": "accessory", "price": 80, "layer": "accessory", "asset": "acc-earrings-heart", "slot": "ears" },
 
   { "id": "acc-crown", "name": "Zlatá korunka", "category": "accessory", "price": null, "layer": "accessory", "asset": "acc-crown", "slot": "head", "unlockBadge": "times-table-star" }
 ]

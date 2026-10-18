@@ -33,6 +33,18 @@ describe('katalog oblečení', () => {
     expect(buyable('shoes').length).toBeGreaterThanOrEqual(10)
   })
 
+  test('doplňky: aspoň 16 na koupi a každé místo na těle má aspoň jeden', () => {
+    const accessories = buyable('accessory')
+    expect(accessories.length).toBeGreaterThanOrEqual(16)
+    for (const slot of ACCESSORY_SLOTS) expect(accessories.some((item) => item.slot === slot), slot).toBe(true)
+  })
+
+  test('celý obchod stojí 2500 až 3500 zlaťáků', () => {
+    const total = CATEGORIES.flatMap(buyable).reduce((sum, item) => sum + item.price!, 0)
+    expect(total).toBeGreaterThanOrEqual(2500)
+    expect(total).toBeLessThanOrEqual(3500)
+  })
+
   test('vlasy: aspoň 10 kousků na koupi', () => {
     expect(buyable('hair').length).toBeGreaterThanOrEqual(10)
   })

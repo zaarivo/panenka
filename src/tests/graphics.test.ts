@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { ITEMS } from '../data/items'
-import { BASE_ASSETS, resolveAsset } from '../graphics'
+import { BASE_ASSETS, resolveAsset, thumbnailViewBox } from '../graphics'
 
 describe('registr grafiky', () => {
   test('každý kousek z katalogu má grafiku', () => {
@@ -19,5 +19,10 @@ describe('registr grafiky', () => {
   test('neznámá grafika vrátí null místo pádu', () => {
     expect(resolveAsset('neexistuje')).toBeNull()
     expect(resolveAsset('constructor')).toBeNull()
+  })
+
+  test('náhled doplňku bez vlastního výřezu ukáže jeho místo na těle', () => {
+    expect(thumbnailViewBox({ category: 'accessory', asset: 'neznamy', slot: 'neck' })).toBe('96 180 108 90')
+    expect(thumbnailViewBox({ category: 'accessory', asset: 'neznamy', slot: 'ears' })).toBe('70 100 160 90')
   })
 })
