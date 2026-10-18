@@ -1,5 +1,8 @@
 import type { Rng, Tier } from '../types'
 
+export const MINUS = '−'
+export const TIMES = '×'
+
 export interface Range {
   min: number
   max: number

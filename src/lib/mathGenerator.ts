@@ -1,5 +1,8 @@
 import type { Rng, Tier, TopicId } from '../types'
-import { EQUATION_RULES, generateEquation, pick, randInt, type AddSubRule, type Equation } from './equations'
+import { EQUATION_RULES, MINUS, TIMES, generateEquation, pick, randInt, type AddSubRule, type Equation } from './equations'
+import { generateWordProblem } from './wordProblems'
+
+export { MINUS, TIMES }
 
 export type CompareSign = '<' | '>' | '='
 
@@ -18,9 +21,6 @@ export type NumberProblem = ProblemBase & { kind: 'number'; answer: number }
 export type ComparisonProblem = ProblemBase & { kind: 'compare'; answer: CompareSign }
 export type Problem = NumberProblem | ComparisonProblem
 export type ProblemDraft = Omit<NumberProblem, 'key'> | Omit<ComparisonProblem, 'key'>
-
-export const MINUS = '−'
-export const TIMES = '×'
 
 export const MULTIPLICATION_ROWS: Record<Tier, readonly number[]> = {
   easy: [2, 5, 10],
@@ -158,9 +158,7 @@ const BUILDERS: Record<TopicId, (rng: Rng, tier: Tier) => ProblemDraft> = {
   multiplication: buildMultiplication,
   missingNumber: buildMissingNumber,
   comparison: buildComparison,
-  wordProblems: () => {
-    throw new Error('Slovní úlohy přibudou v dalším kroku')
-  },
+  wordProblems: (rng, tier) => generateWordProblem(tier, rng),
 }
 
 export function pickTopic(enabled: readonly TopicId[], rng: Rng = Math.random): TopicId {
