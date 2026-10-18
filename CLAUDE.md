@@ -102,7 +102,7 @@ vydělané řešením matematických příkladů.
 | 4 | do 100 s přechodem | + 8, 9 |
 
 - Přechod: sčítání = jednotky dají víc než 10; odčítání = jednotky menšence nestačí.
-- Násobilka: činitel 1–10, zápis `k · řada` (české „·“, minus jako „−“).
+- Násobilka: činitel 1–10, zápis `k × řada` (schváleno „×“ místo „·“; minus jako „−“).
 - Odměna 10 zlaťáků na stupních 1–2, 15 na stupních 3–4 (podle stupně, na kterém příklad vznikl).
 - Chybějící číslo skrývá první nebo druhý člen; porovnávání = výraz vs. číslo, ~1/3 rovnost.
 - Každý pokus se počítá: chyba nuluje řadu správných, správná odpověď nuluje řadu chyb.

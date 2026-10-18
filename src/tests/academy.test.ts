@@ -5,7 +5,7 @@ import { createDefaultSave } from '../lib/storage'
 
 const addition: Problem = { type: 'addSub', level: 1, prompt: '3 + 4 = ?', answer: 7, hint: '', key: 'a' }
 const hardAddition: Problem = { ...addition, level: 3 }
-const multiplication: Problem = { type: 'multiplication', level: 2, prompt: '3 · 4 = ?', answer: 12, hint: '', key: 'm' }
+const multiplication: Problem = { type: 'multiplication', level: 2, prompt: '3 × 4 = ?', answer: 12, hint: '', key: 'm' }
 
 describe('správná odpověď', () => {
   test('přidá 10 zlaťáků, na těžším stupni 15', () => {

@@ -40,7 +40,7 @@ function parse(problem: Problem) {
 function evaluate(a: number, op: string, b: number): number {
   if (op === '+') return a + b
   if (op === '−') return a - b
-  if (op === '·') return a * b
+  if (op === '×') return a * b
   throw new Error(`neznámá operace ${op}`)
 }
 
@@ -78,7 +78,7 @@ describe.each(LEVELS)('stupeň %i', (level) => {
     const rowsSeen = new Set<number>()
     for (const problem of generateMany('multiplication', level)) {
       const [times, op, row, eq, result] = parse(problem).filled
-      expect(op).toBe('·')
+      expect(op).toBe('×')
       expect(eq).toBe('=')
       expect(MULTIPLICATION_ROWS[level]).toContain(Number(row))
       expect(Number(times)).toBeGreaterThanOrEqual(1)
@@ -158,8 +158,8 @@ describe('nápovědy', () => {
   })
 
   test('násobení jako opakované sčítání', () => {
-    expect(multiplicationHint(4, 3)).toBe('4 · 3 je 4krát 3: 3 + 3 + 3 + 3.')
-    expect(multiplicationHint(7, 2)).toBe('7 · 2 je 7krát 2. Víš, že 5 · 2 = 10, přičti ještě 2 + 2.')
+    expect(multiplicationHint(4, 3)).toBe('4 × 3 je 4krát 3: 3 + 3 + 3 + 3.')
+    expect(multiplicationHint(7, 2)).toBe('7 × 2 je 7krát 2. Víš, že 5 × 2 = 10, přičti ještě 2 + 2.')
   })
 
   test('nápověda nikdy neobsahuje výsledek jako „= odpověď“', () => {

@@ -23,7 +23,7 @@ export type ComparisonProblem = ProblemBase & {
 export type Problem = NumberProblem | ComparisonProblem
 
 export const MINUS = '−'
-export const TIMES = '·'
+export const TIMES = '×'
 
 interface Range {
   min: number

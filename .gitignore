@@ -3,4 +3,5 @@ dist
 dev-dist
 coverage
 *.local
+.superpowers
 .DS_Store
