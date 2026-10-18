@@ -17,7 +17,10 @@ import { SoundOffIcon, SoundOnIcon } from '../ui/icons'
 const PRAISE = ['Správně!', 'Výborně!', 'Super!', 'Paráda!', 'Skvělé!']
 const NEXT_PROBLEM_DELAY_MS = 1200
 
-type Phase = 'answering' | 'wrong' | 'correct' | 'skipped' | 'chest' | 'summary'
+type Phase = 'answering' | 'wrong' | 'correct' | 'skipped' | 'chest' | 'summary' | 'paused'
+
+/** Fáze, kdy je příklad rozdělaný (včetně pochvaly a truhly) — časový zámek počká. */
+const BUSY_PHASES: readonly Phase[] = ['answering', 'wrong', 'correct', 'skipped', 'chest']
 
 interface AcademyScreenProps {
   save: SaveData
@@ -27,6 +30,9 @@ interface AcademyScreenProps {
   onReceiveGold: (amount: number) => void
   onSoundChange: (soundOn: boolean) => void
   onGoToShop: () => void
+  /** Čas vypršel: dokončit rozdělaný příklad, další už nedávat. */
+  lockRequested: boolean
+  onBusyChange: (busy: boolean) => void
 }
 
 export function AcademyScreen({
@@ -37,6 +43,8 @@ export function AcademyScreen({
   onReceiveGold,
   onSoundChange,
   onGoToShop,
+  lockRequested,
+  onBusyChange,
 }: AcademyScreenProps) {
   const { settings } = save
   const [difficulty, setDifficulty] = useState<DifficultyState>({ level: save.level, correctStreak: 0, mistakeStreak: 0 })
@@ -53,7 +61,16 @@ export function AcademyScreen({
   const [hintVisible, setHintVisible] = useState(false)
   const [easier, setEasier] = useState(false)
 
+  const busy = BUSY_PHASES.includes(phase)
+  useEffect(() => {
+    onBusyChange(busy)
+  }, [busy, onBusyChange])
+
   function nextProblem() {
+    if (lockRequested) {
+      setPhase('paused')
+      return
+    }
     setProblem((previous) =>
       generateProblem({ types: settings.enabledTypes, level: difficulty.level, previousKey: previous.key }),
     )

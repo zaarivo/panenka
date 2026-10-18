@@ -144,6 +144,28 @@ vydělané řešením matematických příkladů.
 - Změna typů/obtížnosti, reset i import začnou v Akademii nové kolo (React `key`).
 - Logika: `lib/parent.ts`, UI: `components/parent/`.
 
+## Časový zámek (schváleno po MVP)
+
+- Při každém zapnutí hra chce PIN, pokud neběží odemknutí: buď odpočet z minula (přežije
+  zavření), nebo „Bez omezení“ v tomto spuštění (sessionStorage, platí do zavření hry).
+- Po PINu výběr času: předvolby 10/15/20/30 min (výchozí 15), vlastní čas po 5 min (5–120),
+  „Bez omezení“. Při prvním spuštění se výběr ukáže hned po nastavení PINu.
+- Odpočet nahoře na všech obrazovkách (`TimerBar`), běží podle hodin i při zavřené hře.
+  Poslední minutu „Ještě minutka!“. U „Bez omezení“ se neukazuje.
+- Konec času: v Akademii se rozdělaný příklad (vč. pochvaly, truhly, ukázaného řešení) dokončí,
+  další už nepřijde (`lockRequested` → fáze `paused`); jinde se zamkne hned.
+- Zamčená obrazovka „Čas na pauzu!“ s vydělanými zlaťáky za odemknutí + „Pro rodiče: odemknout
+  PINem“ → PIN → výběr času. Bez vypršeného záznamu ukazuje „Ahoj! Hru odemkne rodič.“
+- Logika `lib/playTime.ts` (`panenka_unlock` v localStorage, `panenka_unlock_session`
+  v sessionStorage, validace — konec dál než 120 min = neplatné), hook `usePlayTime`,
+  UI `components/lock/`.
+
+## Přeskočení příkladu (schváleno po MVP)
+
+- U každého příkladu tlačítko „Je to moc těžké, přeskočit“: ukáže správný výsledek
+  („Nevadí! Správně je X.“) a „Další příklad“. Bez zlaťáků, nepočítá se do kola ani do
+  statistik, vynuluje řadu hvězdiček i řadu násobilky, stupeň o jeden níž (v mezích rodiče).
+
 ## UI
 
 - Mobil na výšku, min. 56 px dotyková tlačítka

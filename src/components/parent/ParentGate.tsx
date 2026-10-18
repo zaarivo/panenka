@@ -5,9 +5,10 @@ interface ParentGateProps {
   checkPin: (pin: string) => boolean
   onUnlock: () => void
   onCancel: () => void
+  cancelLabel?: string
 }
 
-export function ParentGate({ checkPin, onUnlock, onCancel }: ParentGateProps) {
+export function ParentGate({ checkPin, onUnlock, onCancel, cancelLabel = 'Zpět do hry' }: ParentGateProps) {
   const [error, setError] = useState<string | null>(null)
 
   return (
@@ -20,7 +21,7 @@ export function ParentGate({ checkPin, onUnlock, onCancel }: ParentGateProps) {
           onComplete={(pin) => (checkPin(pin) ? onUnlock() : setError('Špatný PIN.'))}
         />
         <button type="button" onClick={onCancel} className="min-h-14 rounded-2xl bg-violet-100 text-lg font-bold text-violet-600">
-          Zpět do hry
+          {cancelLabel}
         </button>
         <p className="text-center text-sm text-violet-400">
           Zapomenutý PIN: smažte data této stránky v nastavení prohlížeče (smaže se i postup).
