@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { CORRUPT_BACKUP_KEY, SAVE_KEY, createDefaultSave, loadSave, parseSave, writeSave } from '../lib/storage'
+import { CORRUPT_BACKUP_KEY, SAVE_KEY, createDefaultSave, loadSave, migrateTopicsFromV1, parseSave, writeSave } from '../lib/storage'
+import { allTiersOn } from '../lib/topics'
 
 function memoryStorage(initial: Record<string, string> = {}): Storage {
   const map = new Map(Object.entries(initial))
@@ -92,20 +93,124 @@ describe('čištění dat', () => {
     expect(parseSave(raw)!.equipped).toEqual({ shoes: 'shoes-sneakers-white' })
   })
 
-  test('úroveň srovná do mezí od rodiče', () => {
+  test('neznámé obtížnosti zahodí, duplicity odstraní a seřadí', () => {
     const base = createDefaultSave()
-    const raw = { ...base, level: 4, settings: { ...base.settings, minLevel: 1, maxLevel: 2 } }
-    expect(parseSave(raw)!.level).toBe(2)
+    const raw = { ...base, settings: { ...base.settings, topics: { ...base.settings.topics, add20: ['hard', 'nesmysl', 'easy', 'hard'] } } }
+    expect(parseSave(raw)!.settings.topics.add20).toEqual(['easy', 'hard'])
   })
 
-  test('odmítne obrácené meze obtížnosti', () => {
+  test('chybějící kategorie je vypnutá', () => {
     const base = createDefaultSave()
-    expect(parseSave({ ...base, settings: { ...base.settings, minLevel: 3, maxLevel: 2 } })).toBeNull()
+    const { wordProblems: _, ...rest } = base.settings.topics
+    expect(parseSave({ ...base, settings: { ...base.settings, topics: rest } })!.settings.topics.wordProblems).toEqual([])
   })
 
-  test('prázdný výběr typů příkladů nahradí všemi typy', () => {
+  test('žádná zaškrtnutá obtížnost nikde → vše zaškrtnuté', () => {
     const base = createDefaultSave()
-    const save = parseSave({ ...base, settings: { ...base.settings, enabledTypes: ['nesmysl'] } })!
-    expect(save.settings.enabledTypes).toEqual(base.settings.enabledTypes)
+    const empty = Object.fromEntries(Object.keys(base.settings.topics).map((k) => [k, []]))
+    expect(parseSave({ ...base, settings: { ...base.settings, topics: empty } })!.settings.topics).toEqual(allTiersOn())
+  })
+
+  test('aktuální obtížnost srovná do zaškrtnutých', () => {
+    const base = createDefaultSave()
+    const raw = {
+      ...base,
+      currentTier: { ...base.currentTier, add20: 'hard', add100: 'nesmysl' },
+      settings: { ...base.settings, topics: { ...base.settings.topics, add20: ['easy', 'medium'] } },
+    }
+    const save = parseSave(raw)!
+    expect(save.currentTier.add20).toBe('medium')
+    expect(save.currentTier.add100).toBe('easy')
+  })
+
+  test('neplatné záznamy úspěšnosti zahodí, platné nechá', () => {
+    const ok = { recent: [true, false], total: 5, snoozedAtTotal: 3 }
+    const raw = {
+      ...createDefaultSave(),
+      practice: {
+        'add20:easy': ok,
+        'add20:nesmysl': ok,
+        'neznamy:easy': ok,
+        'add20:medium': { recent: ['ano'], total: 1, snoozedAtTotal: null },
+        'add20:hard': { recent: Array(21).fill(true), total: 21, snoozedAtTotal: null },
+        'add100:easy': { recent: [true], total: 0, snoozedAtTotal: null },
+        'add100:medium': { recent: [true], total: 1, snoozedAtTotal: 2 },
+      },
+    }
+    expect(parseSave(raw)!.practice).toEqual({ 'add20:easy': ok })
+  })
+})
+
+describe('převod z verze 1', () => {
+  /** Uložený stav, jaký má telefon před aktualizací. */
+  const phoneV1 = {
+    saveVersion: 1,
+    gold: 131,
+    owned: ['hair-ponytail-brown', 'dress-tshirt-blue', 'shoes-sneakers-white', 'acc-bow-pink', 'acc-crown', 'dress-pink'],
+    equipped: { hair: 'hair-ponytail-brown', dress: 'dress-pink', shoes: 'shoes-sneakers-white', accessory: 'acc-crown' },
+    badges: ['first-step', 'times-table-star'],
+    stats: { totalCorrect: 37, multiplicationStreak: 12 },
+    level: 3,
+    settings: { soundOn: false, enabledTypes: ['addSub', 'multiplication', 'missingNumber', 'comparison'], minLevel: 2, maxLevel: 3 },
+    parentPinHash: 'fnv1a:39e21db5',
+  }
+
+  test('převod reálného v1 save zachová postup a přeloží nastavení', () => {
+    const save = parseSave(phoneV1)!
+    expect(save.saveVersion).toBe(2)
+    expect(save.gold).toBe(131)
+    expect(save.owned).toEqual(expect.arrayContaining(['acc-crown', 'dress-pink']))
+    expect(save.equipped).toEqual(phoneV1.equipped)
+    expect(save.badges).toEqual(['first-step', 'times-table-star'])
+    expect(save.stats).toEqual({ totalCorrect: 37, multiplicationStreak: 12 })
+    expect(save.parentPinHash).toBe('fnv1a:39e21db5')
+    expect(save.settings.soundOn).toBe(false)
+    expect(save.settings.topics).toEqual({
+      add20: ['hard'],
+      add100: ['medium'],
+      multiplication: ['medium', 'hard'],
+      missingNumber: ['medium', 'hard'],
+      comparison: ['medium', 'hard'],
+      wordProblems: [],
+    })
+    expect(save.currentTier).toEqual({
+      add20: 'hard',
+      add100: 'medium',
+      multiplication: 'medium',
+      missingNumber: 'medium',
+      comparison: 'medium',
+      wordProblems: 'easy',
+    })
+    expect(save.practice).toEqual({})
+  })
+
+  test('jen násobilka na stupni 1 → jen lehká násobilka', () => {
+    expect(migrateTopicsFromV1(['multiplication'], 1, 1)).toEqual({
+      add20: [],
+      add100: [],
+      multiplication: ['easy'],
+      missingNumber: [],
+      comparison: [],
+      wordProblems: [],
+    })
+  })
+
+  test('sčítání na všech stupních pokryje obě kategorie', () => {
+    const topics = migrateTopicsFromV1(['addSub'], 1, 4)
+    expect(topics.add20).toEqual(['medium', 'hard'])
+    expect(topics.add100).toEqual(['medium', 'hard'])
+  })
+
+  test('převedený stav se uloží a načte jako v2', () => {
+    const storage = memoryStorage({ [SAVE_KEY]: JSON.stringify(phoneV1) })
+    const loaded = loadSave(storage)
+    writeSave(loaded, storage)
+    expect(JSON.parse(storage.getItem(SAVE_KEY)!).saveVersion).toBe(2)
+    expect(loadSave(storage)).toEqual(loaded)
+  })
+
+  test('poškozený v1 save dá výchozí stav', () => {
+    expect(parseSave({ ...phoneV1, gold: -1 })).toBeNull()
+    expect(parseSave({ ...phoneV1, settings: { ...phoneV1.settings, minLevel: 3, maxLevel: 2 } })).toBeNull()
   })
 })

@@ -8,12 +8,6 @@ export type ItemLayer = Exclude<Layer, 'background' | 'body'>
 export const BADGE_IDS = ['first-step', 'times-table-star', 'diligent-pupil'] as const
 export type BadgeId = (typeof BADGE_IDS)[number]
 
-export const PROBLEM_TYPES = ['addSub', 'multiplication', 'missingNumber', 'comparison'] as const
-export type ProblemType = (typeof PROBLEM_TYPES)[number]
-
-export const LEVELS = [1, 2, 3, 4] as const
-export type Level = (typeof LEVELS)[number]
-
 /** Kategorie úloh („topic“ — `Category` už znamená druh oblečení). */
 export const TOPIC_IDS = ['add20', 'add100', 'multiplication', 'missingNumber', 'comparison', 'wordProblems'] as const
 export type TopicId = (typeof TOPIC_IDS)[number]
@@ -52,13 +46,11 @@ export interface Item {
 
 export interface Settings {
   soundOn: boolean
-  enabledTypes: ProblemType[]
-  minLevel: Level
-  maxLevel: Level
+  topics: TopicSettings
 }
 
 export interface SaveData {
-  saveVersion: 1
+  saveVersion: 2
   gold: number
   owned: string[]
   equipped: Partial<Record<Category, string>>
@@ -67,7 +59,9 @@ export interface SaveData {
     totalCorrect: number
     multiplicationStreak: number
   }
-  level: Level
+  /** Aktuální obtížnost každé kategorie (hra ji posouvá sama). */
+  currentTier: Record<TopicId, Tier>
+  practice: Practice
   settings: Settings
   parentPinHash: string | null
 }

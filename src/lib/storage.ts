@@ -2,20 +2,39 @@ import { ITEMS_BY_ID, STARTER_ITEMS } from '../data/items'
 import {
   BADGE_IDS,
   CATEGORIES,
-  LEVELS,
-  PROBLEM_TYPES,
+  TIERS,
+  TOPIC_IDS,
   type Category,
-  type Level,
+  type Practice,
+  type PracticeKey,
+  type PracticeRecord,
   type SaveData,
+  type Tier,
+  type TopicId,
+  type TopicSettings,
 } from '../types'
+import { clampTier } from './difficulty'
+import { RECENT_WINDOW } from './practice'
+import { allTiersOn, sortTiers } from './topics'
 
 export const SAVE_KEY = 'panenka_save'
 export const CORRUPT_BACKUP_KEY = 'panenka_save_corrupt'
-export const SAVE_VERSION = 1
+export const SAVE_VERSION = 2
+
+/** Formát verze 1 (před kategoriemi úloh) — jen pro převod starých dat. */
+const V1_PROBLEM_TYPES = ['addSub', 'multiplication', 'missingNumber', 'comparison'] as const
+type V1ProblemType = (typeof V1_PROBLEM_TYPES)[number]
+const V1_LEVELS = [1, 2, 3, 4] as const
+type V1Level = (typeof V1_LEVELS)[number]
+
+function lowestTiers(topics: TopicSettings): Record<TopicId, Tier> {
+  return Object.fromEntries(TOPIC_IDS.map((topic) => [topic, topics[topic][0] ?? 'easy'])) as Record<TopicId, Tier>
+}
 
 export function createDefaultSave(): SaveData {
   const equipped: Partial<Record<Category, string>> = {}
   for (const item of STARTER_ITEMS) equipped[item.category] = item.id
+  const topics = allTiersOn()
   return {
     saveVersion: SAVE_VERSION,
     gold: 0,
@@ -23,13 +42,9 @@ export function createDefaultSave(): SaveData {
     equipped,
     badges: [],
     stats: { totalCorrect: 0, multiplicationStreak: 0 },
-    level: 1,
-    settings: {
-      soundOn: true,
-      enabledTypes: [...PROBLEM_TYPES],
-      minLevel: 1,
-      maxLevel: 4,
-    },
+    currentTier: lowestTiers(topics),
+    practice: {},
+    settings: { soundOn: true, topics },
     parentPinHash: null,
   }
 }
@@ -42,33 +57,38 @@ function isNonNegativeInt(value: unknown): value is number {
   return Number.isInteger(value) && (value as number) >= 0
 }
 
-function isLevel(value: unknown): value is Level {
-  return LEVELS.includes(value as Level)
+const isTier = (value: unknown): value is Tier => TIERS.includes(value as Tier)
+
+/** Staré typy a stupně 1–4 → kategorie a obtížnosti (mapování ze schváleného návrhu). */
+export function migrateTopicsFromV1(enabledTypes: readonly V1ProblemType[], minLevel: V1Level, maxLevel: V1Level): TopicSettings {
+  const topics: Record<TopicId, Set<Tier>> = Object.fromEntries(TOPIC_IDS.map((topic) => [topic, new Set<Tier>()])) as Record<
+    TopicId,
+    Set<Tier>
+  >
+  for (let level = minLevel; level <= maxLevel; level++) {
+    if (enabledTypes.includes('addSub')) {
+      if (level === 1) topics.add20.add('medium')
+      if (level === 2) topics.add20.add('hard')
+      if (level === 3) topics.add100.add('medium')
+      if (level === 4) topics.add100.add('hard')
+    }
+    if (enabledTypes.includes('multiplication')) topics.multiplication.add(level === 1 ? 'easy' : level === 2 ? 'medium' : 'hard')
+    for (const topic of ['missingNumber', 'comparison'] as const) {
+      if (enabledTypes.includes(topic)) topics[topic].add(level <= 2 ? 'medium' : 'hard')
+    }
+  }
+  return Object.fromEntries(TOPIC_IDS.map((topic) => [topic, sortTiers([...topics[topic]])])) as TopicSettings
 }
 
-/** Vrátí platný a vyčištěný save, nebo null, pokud data nejsou použitelná. */
-export function parseSave(raw: unknown): SaveData | null {
-  if (!isRecord(raw) || raw.saveVersion !== SAVE_VERSION) return null
-  const { gold, owned, equipped, badges, stats, level, settings, parentPinHash } = raw
-
+/** Pole společná pro obě verze. */
+function parseCommon(raw: Record<string, unknown>) {
+  const { gold, owned, equipped, badges, stats, settings, parentPinHash } = raw
   if (!isNonNegativeInt(gold)) return null
   if (!Array.isArray(owned) || !owned.every((id) => typeof id === 'string')) return null
   if (!isRecord(equipped)) return null
   if (!Array.isArray(badges)) return null
-  if (!isRecord(stats) || !isNonNegativeInt(stats.totalCorrect) || !isNonNegativeInt(stats.multiplicationStreak)) {
-    return null
-  }
-  if (!isLevel(level)) return null
-  if (
-    !isRecord(settings) ||
-    typeof settings.soundOn !== 'boolean' ||
-    !Array.isArray(settings.enabledTypes) ||
-    !isLevel(settings.minLevel) ||
-    !isLevel(settings.maxLevel) ||
-    settings.minLevel > settings.maxLevel
-  ) {
-    return null
-  }
+  if (!isRecord(stats) || !isNonNegativeInt(stats.totalCorrect) || !isNonNegativeInt(stats.multiplicationStreak)) return null
+  if (!isRecord(settings) || typeof settings.soundOn !== 'boolean') return null
   if (parentPinHash !== null && typeof parentPinHash !== 'string') return null
 
   const ownedIds = new Set<string>(STARTER_ITEMS.map((item) => item.id))
@@ -77,29 +97,93 @@ export function parseSave(raw: unknown): SaveData | null {
   const cleanEquipped: Partial<Record<Category, string>> = {}
   for (const category of CATEGORIES) {
     const id = equipped[category]
-    if (typeof id === 'string' && ownedIds.has(id) && ITEMS_BY_ID.get(id)?.category === category) {
-      cleanEquipped[category] = id
-    }
+    if (typeof id === 'string' && ownedIds.has(id) && ITEMS_BY_ID.get(id)?.category === category) cleanEquipped[category] = id
   }
 
-  const enabledTypes = PROBLEM_TYPES.filter((type) => (settings.enabledTypes as unknown[]).includes(type))
-  const { minLevel, maxLevel } = settings
-
   return {
-    saveVersion: SAVE_VERSION,
     gold,
     owned: [...ownedIds],
     equipped: cleanEquipped,
     badges: BADGE_IDS.filter((id) => badges.includes(id)),
     stats: { totalCorrect: stats.totalCorrect, multiplicationStreak: stats.multiplicationStreak },
-    level: Math.min(Math.max(level, minLevel), maxLevel) as Level,
-    settings: {
-      soundOn: settings.soundOn,
-      enabledTypes: enabledTypes.length > 0 ? enabledTypes : [...PROBLEM_TYPES],
-      minLevel,
-      maxLevel,
-    },
+    soundOn: settings.soundOn,
+    settings,
     parentPinHash,
+  }
+}
+
+function parseV1Topics(settings: Record<string, unknown>): TopicSettings | null {
+  const { enabledTypes, minLevel, maxLevel } = settings
+  const isLevel = (value: unknown): value is V1Level => V1_LEVELS.includes(value as V1Level)
+  if (!Array.isArray(enabledTypes) || !isLevel(minLevel) || !isLevel(maxLevel) || minLevel > maxLevel) return null
+  const types = V1_PROBLEM_TYPES.filter((type) => (enabledTypes as unknown[]).includes(type))
+  return migrateTopicsFromV1(types.length > 0 ? types : V1_PROBLEM_TYPES, minLevel, maxLevel)
+}
+
+function parseV2Topics(settings: Record<string, unknown>): TopicSettings | null {
+  const { topics } = settings
+  if (!isRecord(topics)) return null
+  const parsed = Object.fromEntries(
+    TOPIC_IDS.map((topic) => {
+      const tiers = topics[topic]
+      return [topic, Array.isArray(tiers) ? sortTiers(tiers.filter(isTier)) : []]
+    }),
+  ) as TopicSettings
+  return TOPIC_IDS.some((topic) => parsed[topic].length > 0) ? parsed : allTiersOn()
+}
+
+function parsePracticeRecord(value: unknown): PracticeRecord | null {
+  if (!isRecord(value)) return null
+  const { recent, total, snoozedAtTotal } = value
+  if (!Array.isArray(recent) || recent.length > RECENT_WINDOW || !recent.every((r) => typeof r === 'boolean')) return null
+  if (!isNonNegativeInt(total) || total < recent.length) return null
+  if (snoozedAtTotal !== null && !(isNonNegativeInt(snoozedAtTotal) && snoozedAtTotal <= total)) return null
+  return { recent: [...recent], total, snoozedAtTotal }
+}
+
+function parsePractice(value: unknown): Practice {
+  if (!isRecord(value)) return {}
+  const practice: Practice = {}
+  for (const topic of TOPIC_IDS) {
+    for (const tier of TIERS) {
+      const key: PracticeKey = `${topic}:${tier}`
+      const record = parsePracticeRecord(value[key])
+      if (record) practice[key] = record
+    }
+  }
+  return practice
+}
+
+/** Vrátí platný a vyčištěný save (verze 1 se převede na 2), nebo null, pokud data nejsou použitelná. */
+export function parseSave(raw: unknown): SaveData | null {
+  if (!isRecord(raw) || (raw.saveVersion !== 1 && raw.saveVersion !== SAVE_VERSION)) return null
+  const common = parseCommon(raw)
+  if (!common) return null
+
+  const isV1 = raw.saveVersion === 1
+  const topics = isV1 ? parseV1Topics(common.settings) : parseV2Topics(common.settings)
+  if (!topics) return null
+
+  const storedTiers = !isV1 && isRecord(raw.currentTier) ? raw.currentTier : {}
+  const currentTier = Object.fromEntries(
+    TOPIC_IDS.map((topic) => {
+      const stored = storedTiers[topic]
+      const tier = isTier(stored) ? stored : (topics[topic][0] ?? 'easy')
+      return [topic, clampTier(tier, topics[topic])]
+    }),
+  ) as Record<TopicId, Tier>
+
+  return {
+    saveVersion: SAVE_VERSION,
+    gold: common.gold,
+    owned: common.owned,
+    equipped: common.equipped,
+    badges: common.badges,
+    stats: common.stats,
+    currentTier,
+    practice: isV1 ? {} : parsePractice(raw.practice),
+    settings: { soundOn: common.soundOn, topics },
+    parentPinHash: common.parentPinHash,
   }
 }
 
