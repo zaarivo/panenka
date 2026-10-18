@@ -2,10 +2,12 @@ import { useRef, useState } from 'react'
 import { ITEMS } from '../../data/items'
 import { renderDollPng, shareOrDownload } from '../../lib/photo'
 import { equipSlot } from '../../lib/wardrobe'
-import { CATEGORIES, type Category, type SaveData } from '../../types'
+import { CATEGORIES, type AccessorySlot, type Category, type SaveData } from '../../types'
 import { DollViewer } from '../doll/DollViewer'
 import { ItemThumbnail } from '../doll/ItemThumbnail'
 import { CameraIcon } from '../ui/icons'
+
+const SLOT_LABELS: Record<AccessorySlot, string> = { head: 'hlava', face: 'obličej', neck: 'krk', hand: 'ruka', ears: 'uši' }
 
 export const CATEGORY_LABELS: Record<Category, string> = {
   hair: 'Vlasy',
@@ -85,11 +87,12 @@ export function WardrobeScreen({ save, onToggleItem }: WardrobeScreenProps) {
               aria-pressed={worn}
               aria-label={item.name}
               onClick={() => onToggleItem(item.id)}
-              className={`flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-white p-1 transition-transform active:scale-95 ${
+              className={`flex h-24 w-24 shrink-0 flex-col items-center justify-center rounded-2xl bg-white p-1 transition-transform active:scale-95 ${
                 worn ? 'ring-4 ring-pink-400' : 'ring-1 ring-violet-100'
               }`}
             >
-              <ItemThumbnail item={item} className="h-full w-full" />
+              <ItemThumbnail item={item} className="min-h-0 w-full flex-1" />
+              {item.slot && <span className="text-[11px] leading-tight font-semibold text-violet-400">{SLOT_LABELS[item.slot]}</span>}
             </button>
           )
         })}

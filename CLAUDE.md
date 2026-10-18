@@ -26,8 +26,10 @@ vydělané řešením matematických příkladů.
 
 ## Stav a uložení
 
-- `localStorage` s klíčem `panenka_save`, verze je uvnitř dat (`saveVersion: 2`); verze 1 (typy + stupně
+- `localStorage` s klíčem `panenka_save`, verze je uvnitř dat (`saveVersion: 3`); verze 1 (typy + stupně
   1–4) se při načtení i importu převede (`migrateTopicsFromV1`), postup a PIN zůstanou
+- Verze 1 a 2 měly `equipped` po kategoriích; při načtení se nasazené kousky přeřadí podle
+  `equipSlot(item)` (doplňky na své místo na těle), při kolizi vyhraje první
 - Veškeré čtení/zápis v `try/catch`; při poškozených datech výchozí stav (bez pádu)
   a původní text se schová pod `panenka_save_corrupt` pro ruční záchranu
 - `parseSave()` validuje a čistí data (neznámé kousky/odznaky zahodí, startovní kousky doplní,
@@ -46,10 +48,15 @@ vydělané řešením matematických příkladů.
     podle `LAYER_ORDER`, `LayerAsset` vykreslí jednu vrstvu.
   - Geometrie postavy: hlava střed (150,125), ramena y≈212, pas y≈300, ruce (83,356)/(217,356),
     chodidla (131,547)/(169,547). Pravá strana se kreslí zrcadlením (`Mirrored`).
-- 4 kategorie × 4 kusy = 16 položek celkem
+- Grafika je parametrická (komponenty s barvou jako parametrem) v `graphics/hair|dress|shoes|accessories.tsx`,
+  každý soubor vyváží mapu `*_ASSETS` (klíč `asset` → komponenta), `graphics/index.ts` je spojí
+- 4 kategorie: vlasy, šaty, boty po 11 kouscích (1 startovní + 10 v obchodě), doplňky 21
+  (1 startovní, korunka za odznak, 19 v obchodě) — kontroluje `src/tests/items.test.ts`
 - Na startu 1 kousek z každé kategorie zdarma (default outfit) — v items.json `price: 0`
 - Korunka je 17. položka s `price: null` a `unlockBadge` — nedá se koupit, odemyká ji odznak
-- Na sobě vždy nejvýš 1 kousek z každé kategorie (i u doplňků) — rozhodnutí Clauda pro MVP
+- Na sobě nejvýš 1 kousek vlasů, šatů a bot; doplňky mají `slot` (místo na těle: `head`, `face`,
+  `neck`, `hand`, `ears`) a nasadit jde jeden doplněk na každé místo, tedy víc najednou (schváleno)
+  — klíč nasazení `equipSlot()` v `lib/wardrobe.ts` (`hair`, `dress`, `shoes`, `accessory:<slot>`)
 
 ## Obrazovky (spodní lišta, 4 záložky)
 
@@ -60,14 +67,17 @@ vydělané řešením matematických příkladů.
 - Tlačítko „Vyfotit": canvas render → PNG → Web Share API nebo ke stažení
   - `lib/photo.ts`: PNG 600 × 1200 (2×), PNG vrstvy se před vykreslením vloží jako data URL
   - Sdílení přes Web Share API ověřit na telefonu (v prohlížeči na PC jde stažení)
-- Náhledy kousků: tělo + kousek, výřez podle kategorie / konkrétního doplňku (`thumbnailViewBox`)
+- Náhledy kousků: tělo + kousek, výřez podle konkrétního kousku → místa doplňku → kategorie
+  (`thumbnailViewBox`)
+- U doplňků je pod náhledem malý popisek místa (hlava, obličej, krk, ruka, uši)
 
 ### 2. Obchod
-- Ceny z items.json: doplňky 20–30, boty/vlasy 40, šaty 50–60 zlaťáků
+- Ceny z items.json: vlasy 40–110, šaty 45–150, boty 25–110, doplňky 20–80 zlaťáků; celý obchod
+  2670 (testy hlídají rozsahy i součet 2500–3500). V každé kategorii seřazeno od nejlevnějšího.
 - Zamčené věci šedě s cenou; kousky, na které už zlaťáky stačí, jsou barevné s růžovým rámečkem
   (schváleno), koupené mají zelený rámeček a „Už máš“
 - Potvrzovací dialog před nákupem
-- V obchodě jen 12 kousků s cenou > 0 (startovní kousky a korunka tam nejsou) — rozhodnutí Clauda
+- V obchodě jen kousky s cenou > 0 (startovní kousky a korunka tam nejsou) — rozhodnutí Clauda
 - Když zlaťáky nestačí: dialog s chybějící částkou a tlačítkem „Jít počítat“ do Akademie
 - Texty neskloňují názvy kousků (název je vždy v 1. pádě), počty zlaťáků přes `formatGold()`
 
@@ -77,15 +87,15 @@ vydělané řešením matematických příkladů.
 - 6 kategorií úloh, každá s obtížnostmi lehké / střední / těžké (viz tabulka níže, včetně slovních úloh)
 - Adaptivní obtížnost zvlášť pro každou kategorii: po 5 správných v řadě → těžší, po 2 chybách → lehčí,
   jen mezi obtížnostmi, které rodič zaškrtl
-- Odměna: +10 zlaťáků (lehké, střední), +15 (těžké)
+- Odměna: +5 zlaťáků (lehké, střední), +8 (těžké) (schváleno, dřív 10/15)
 - Chyba: nápověda podle typu (rozklad přes desítku, násobilka jako opakované sčítání), další pokus
 - Vlastní velká číselná klávesnice (ne systémová)
-- Po 5 správných v řadě: bonusová truhla, náhodná odměna 20–40 zlaťáků
+- Po 5 správných v řadě: bonusová truhla, náhodná odměna 10–20 zlaťáků
 
 #### Průběh v Akademii (rozhodnutí Clauda)
 - Kola po 10 vyřešených příkladech (`ROUND_SIZE`), pak shrnutí „Kolo hotové!“ s vydělanými
   zlaťáky a volbou „Ještě kolo“ / „Do obchodu“ — podporuje krátké hraní bez časomíry.
-- Po správné odpovědi pochvala + „+10“ vyletí nad počítadlo, zvuk mince; další příklad sám po 1,2 s.
+- Po správné odpovědi pochvala + „+5“ vyletí nad počítadlo, zvuk mince; další příklad sám po 1,2 s.
 - Po chybě se ukáže nápověda a zůstává vidět až do vyřešení; zadání zůstává stejné.
 - 5 hvězdiček ukazuje řadu správných odpovědí; při páté se otevře truhla (klepnutím).
 - Porovnávání se odpovídá třemi velkými tlačítky `<` `=` `>`, ostatní typy vlastní klávesnicí (max 3 číslice).
@@ -181,12 +191,6 @@ vydělané řešením matematických příkladů.
   („Nevadí! Správně je X.“) a „Další příklad“. Bez zlaťáků, nepočítá se do kola ani do správných
   odpovědí, v úspěšnosti pro rodiče se zapíše jako neúspěch, vynuluje řadu hvězdiček i řadu
   násobilky, obtížnost kategorie o jednu níž (jen mezi zaškrtnutými).
-
-## Rozpracováno (schváleno, zatím nepostaveno)
-
-- Levnější odměny (5/5/8, truhla 10–20), aspoň 10 kousků na kategorii v obchodě (ceny 20–150)
-  a doplňky podle místa na těle (víc najednou): `docs/superpowers/specs/2026-10-18-obchod-zlataky-doplnky-design.md`.
-  Další krok: plán stavby (superpowers:writing-plans).
 
 ## UI
 

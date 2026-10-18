@@ -44,7 +44,9 @@ export function ShopScreen({ save, onBuy, onGoToAcademy }: ShopScreenProps) {
           <section key={category} className="mb-4">
             <h2 className="mb-2 text-lg font-bold text-violet-500">{CATEGORY_LABELS[category]}</h2>
             <div className="grid grid-cols-3 gap-3">
-              {SHOP_ITEMS.filter((item) => item.category === category).map((item) => {
+              {SHOP_ITEMS.filter((item) => item.category === category)
+                .sort((a, b) => a.price! - b.price!)
+                .map((item) => {
                 const owned = save.owned.includes(item.id)
                 const affordable = !owned && save.gold >= item.price!
                 const cardStyle = owned
