@@ -292,6 +292,7 @@ export function AcademyScreen({
           <div className="rounded-2xl bg-amber-50 p-3 text-amber-800">
             <p className="font-bold">Skoro! Zkus to znovu.</p>
             <p className="text-base">{problem.hint}</p>
+            {needsMinutes && <p className="mt-1 text-base font-semibold">Napiš i minuty, třeba 5:00.</p>}
           </div>
         )}
         {phase === 'answering' && !hintVisible && (
