@@ -119,9 +119,9 @@ function Pants({ fill, line }: Tone) {
   return (
     <>
       <Mirrored>
-        <path d="M114 300 L150 300 L150 316 L148 512 L122 512 Q118 400 114 300 Z" fill={fill} stroke={line} strokeWidth="2" />
+        <path d="M108 300 L150 300 L150 316 L148 512 L122 512 Q110 400 108 300 Z" fill={fill} stroke={line} strokeWidth="2" />
       </Mirrored>
-      <rect x="112" y="296" width="76" height="12" rx="4" fill={fill} stroke={line} strokeWidth="2" />
+      <rect x="106" y="296" width="88" height="12" rx="4" fill={fill} stroke={line} strokeWidth="2" />
     </>
   )
 }

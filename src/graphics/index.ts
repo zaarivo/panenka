@@ -47,6 +47,11 @@ const ASSET_THUMBNAIL: Readonly<Record<string, string>> = {
   'acc-umbrella': '150 172 134 200',
   'acc-balloon': '170 130 110 236',
   'acc-bouquet': '186 300 70 80',
+  'acc-earrings-pearl': '70 114 46 52',
+  'acc-earrings-heart': '70 114 46 52',
+  'hair-bun-brown': '60 12 180 180',
+  'hair-pigtails-blonde': '52 60 196 180',
+  'hair-curly-red': '54 40 192 180',
   'shoes-rainboots-yellow': '90 436 120 132',
   'shoes-skates': '96 452 108 122',
 }

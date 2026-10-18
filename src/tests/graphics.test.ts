@@ -25,4 +25,25 @@ describe('registr grafiky', () => {
     expect(thumbnailViewBox({ category: 'accessory', asset: 'neznamy', slot: 'neck' })).toBe('96 180 108 90')
     expect(thumbnailViewBox({ category: 'accessory', asset: 'neznamy', slot: 'ears' })).toBe('70 100 160 90')
   })
+
+  test('výřez náhledu obsahuje celý kousek', () => {
+    // [vlevo, nahoře, vpravo, dole] — krajní body grafiky včetně obrysu
+    const extents: Record<string, [number, number, number, number]> = {
+      'hair-bun-brown': [86, 18, 214, 150],
+      'hair-pigtails-blonde': [57, 85, 243, 229],
+      'hair-curly-red': [59, 51, 241, 201],
+    }
+    for (const item of ITEMS.filter((i) => Object.hasOwn(extents, i.asset))) {
+      const [x, y, w, h] = thumbnailViewBox(item).split(' ').map(Number)
+      const [left, top, right, bottom] = extents[item.asset]
+      expect(x <= left && y <= top && x + w >= right && y + h >= bottom, item.id).toBe(true)
+    }
+  })
+
+  test('náušnice mají náhled přiblížený na ucho', () => {
+    for (const item of ITEMS.filter((i) => i.slot === 'ears')) {
+      const [, , w, h] = thumbnailViewBox(item).split(' ').map(Number)
+      expect(Math.max(w, h), item.id).toBeLessThanOrEqual(60)
+    }
+  })
 })

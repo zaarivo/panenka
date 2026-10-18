@@ -177,7 +177,7 @@ function Umbrella() {
         stroke="#7c3aed"
         strokeWidth="2"
       />
-      <path d="M187 244 Q200 196 217 188 M247 244 Q234 196 217 188" fill="none" stroke="#7c3aed" strokeWidth="1.5" opacity="0.5" />
+      <path d="M187 244 Q200 218 217 210 M247 244 Q234 218 217 210" fill="none" stroke="#7c3aed" strokeWidth="1.5" opacity="0.5" />
       <path d="M217 360 Q217 372 207 372" fill="none" stroke="#7c3aed" strokeWidth="3" />
     </g>
   )
@@ -212,7 +212,8 @@ function PearlEarrings() {
   return (
     <Mirrored>
       <path d="M93 140 L93 146" stroke="#ca8a04" strokeWidth="1.5" />
-      <circle cx="93" cy="151" r="5" fill="#fffaf0" stroke="#d6c3a1" strokeWidth="1.5" />
+      <circle cx="93" cy="152" r="6.5" fill="#fffaf0" stroke="#a8916a" strokeWidth="1.5" />
+      <circle cx="91" cy="150" r="2" fill="#ffffff" />
     </Mirrored>
   )
 }
