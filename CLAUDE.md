@@ -26,10 +26,12 @@ vydělané řešením matematických příkladů.
 
 ## Stav a uložení
 
-- `localStorage` s klíčem `panenka_save`, verze je uvnitř dat (`saveVersion: 3`); verze 1 (typy + stupně
+- `localStorage` s klíčem `panenka_save`, verze je uvnitř dat (`saveVersion: 4`); verze 1 (typy + stupně
   1–4) se při načtení i importu převede (`migrateTopicsFromV1`), postup a PIN zůstanou
 - Verze 1 a 2 měly `equipped` po kategoriích; při načtení se nasazené kousky přeřadí podle
   `equipSlot(item)` (doplňky na své místo na těle), při kolizi vyhraje první
+- Verze 4 přidala `stats.correctByTopic` a `medals`; starší verze začnou s nulami. Při převodu z verze
+  1–3 se odebere (i sundá) Zlatá korunka, pokud dítě nemá aspoň 300 správných celkem (`ROYAL_TARGET`)
 - Veškeré čtení/zápis v `try/catch`; při poškozených datech výchozí stav (bez pádu)
   a původní text se schová pod `panenka_save_corrupt` pro ruční záchranu
 - `parseSave()` validuje a čistí data (neznámé kousky/odznaky zahodí, startovní kousky doplní,
@@ -39,7 +41,7 @@ vydělané řešením matematických příkladů.
 
 - Panenka jako SVG vrstvy ve viewBox `0 0 300 600`, originální postava
 - Pořadí vrstev: pozadí → tělo → boty → šaty → vlasy → doplňky
-- Každá položka v `src/data/items.json`: `{ id, name, category, price, layer, asset }`
+- Každá položka v `src/data/items.json`: `{ id, name, category, price, layer, asset, slot?, unlockBadge? }`
 - Komponenta vrstvy umí SVG i PNG (pro pozdější výměnu grafiky bez změny logiky)
   - `asset` = klíč vestavěné SVG grafiky (`src/graphics/`), nebo cesta k obrázku v `public/`
     končící `.png/.webp/.jpg` (např. `doll/dress-pink.png`). Obrázek musí mít plátno 300 × 600
@@ -53,7 +55,7 @@ vydělané řešením matematických příkladů.
 - 4 kategorie: vlasy, šaty, boty po 11 kouscích (1 startovní + 10 v obchodě), doplňky 21
   (1 startovní, korunka za odznak, 19 v obchodě) — kontroluje `src/tests/items.test.ts`
 - Na startu 1 kousek z každé kategorie zdarma (default outfit) — v items.json `price: 0`
-- Korunka je 17. položka s `price: null` a `unlockBadge` — nedá se koupit, odemyká ji odznak
+- Tři korunky mají `price: null` a `unlockBadge` — nedají se koupit, odemyká je odznak (viz Medaile)
 - Na sobě nejvýš 1 kousek vlasů, šatů a bot; doplňky mají `slot` (místo na těle: `head`, `face`,
   `neck`, `hand`, `ears`) a nasadit jde jeden doplněk na každé místo, tedy víc najednou (schváleno)
   — klíč nasazení `equipSlot()` v `lib/wardrobe.ts` (`hair`, `dress`, `shoes`, `accessory:<slot>`)
@@ -134,17 +136,26 @@ vydělané řešením matematických příkladů.
   nebo (je-li jediná) přidat lehčí. Nejvýš jedno na kategorii. „Teď ne“ = znovu po 20 výsledcích.
 - Odškrtnutím obtížnosti se smaže její historie. Logika `lib/practice.ts`, UI `PracticePicker`.
 
-### 4. Síň slávy
-- Odznaky za úspěchy; některé odemykají nekoupitelné kousky
-- MVP odznaky:
+### 4. Medaile (dřív Síň slávy, schváleno, návrh `docs/superpowers/specs/2026-10-18-medaile-design.md`)
+- Pro každou ze 6 kategorií úloh bronzová / stříbrná / zlatá medaile za 10 / 100 / 200 správných
+  v kategorii (`stats.correctByTopic`, počítá se i správně na další pokus, přeskočený ne). Medaile nedávají
+  zlaťáky. Logika `lib/medals.ts` (`MEDALS`, `awardMedals`, `nextMedal`).
+- Obrazovka: karta pro každou kategorii (3 medaile + „do stříbrné 42/100“, po všech „Všechny medaile!“),
+  pod ní oddíl „Odznaky“. UI `MedalsScreen`, `MedalIcon`.
+- Odznaky:
   - „První krok": 10 správných celkem
-  - „Násobilková hvězda": 10 správných z násobilky v řadě → odemkne korunku
-  - „Pilná školačka": 100 správných celkem
+  - „Násobilková hvězda": 10 správných z násobilky v řadě (nic neodemyká)
+  - „Pilná školačka": 100 správných celkem → Bronzová korunka
+  - „Šikovná počtářka": 200 správných celkem → Stříbrná korunka
+  - „Královna počítání": 300 správných celkem → Zlatá korunka
+- Oslavy: společná fronta (`lib/celebrations.ts`), medaile před odznakem. Nová medaile = celoobrazovková
+  animace (pád medaile, paprsky, konfety, fanfára `playFanfare`), `MedalCelebration`; při omezeném pohybu
+  bez animací. Během oslavy stojí stopky Akademie. Doplněné při načtení/importu/resetu se neoslavují.
 - Logika v `lib/badges.ts` (`BADGES`, `awardBadges`). Odemčené kousky se berou z `unlockBadge`
   v items.json; `awardBadges` je doplní i k dříve získaným odznakům (např. po importu).
 - Odznaky se kontrolují po každé správné odpovědi a při načtení hry; získaný odznak už nezmizí.
 - Nový odznak = oslavné okno nad čímkoli (fronta, když jich padne víc najednou); u odznaku
-  s odměnou tlačítko „Do šatníku“. Síň slávy ukazuje u nezískaných odznaků postup (např. 9/10).
+  s odměnou tlačítko „Do šatníku“. U nezískaných odznaků je vidět postup (např. 9/10).
 
 ## Rodičovský panel
 

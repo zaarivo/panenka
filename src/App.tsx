@@ -10,7 +10,7 @@ import { ParentGate } from './components/parent/ParentGate'
 import { ParentPanel } from './components/parent/ParentPanel'
 import { PinSetupScreen } from './components/parent/PinSetupScreen'
 import { AcademyScreen } from './components/screens/AcademyScreen'
-import { HallOfFameScreen } from './components/screens/HallOfFameScreen'
+import { MedalsScreen } from './components/screens/MedalsScreen'
 import { ShopScreen } from './components/screens/ShopScreen'
 import { WardrobeScreen } from './components/screens/WardrobeScreen'
 import { useGameState } from './hooks/useGameState'
@@ -132,7 +132,7 @@ export default function App() {
             active={tab === 'academy' && parent === 'closed' && !celebration}
           />
         </div>
-        {tab === 'fame' && <HallOfFameScreen save={save} onOpenParent={() => setParent('gate')} />}
+        {tab === 'medals' && <MedalsScreen save={save} onOpenParent={() => setParent('gate')} />}
       </main>
       <Navigation active={tab} onChange={setTab} />
 

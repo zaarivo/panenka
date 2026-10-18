@@ -1,13 +1,13 @@
 import type { ComponentType, SVGProps } from 'react'
 import { AcademyIcon, HangerIcon, ShopIcon, TrophyIcon } from './ui/icons'
 
-export type Tab = 'wardrobe' | 'shop' | 'academy' | 'fame'
+export type Tab = 'wardrobe' | 'shop' | 'academy' | 'medals'
 
 const TABS: { id: Tab; label: string; Icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
   { id: 'wardrobe', label: 'Šatník', Icon: HangerIcon },
   { id: 'shop', label: 'Obchod', Icon: ShopIcon },
   { id: 'academy', label: 'Akademie', Icon: AcademyIcon },
-  { id: 'fame', label: 'Síň slávy', Icon: TrophyIcon },
+  { id: 'medals', label: 'Medaile', Icon: TrophyIcon },
 ]
 
 export function Navigation({ active, onChange }: { active: Tab; onChange: (tab: Tab) => void }) {
