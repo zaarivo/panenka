@@ -148,7 +148,7 @@ describe('export a import', () => {
       parentPinHash: null,
     }
     const imported = importProgress({ ...createDefaultSave(), parentPinHash: hashPin('1234') }, JSON.stringify(v1))!
-    expect(imported.saveVersion).toBe(2)
+    expect(imported.saveVersion).toBe(3)
     expect(imported.gold).toBe(40)
     expect(imported.settings.topics.multiplication).toEqual(['easy'])
     expect(imported.parentPinHash).toBe(hashPin('1234'))

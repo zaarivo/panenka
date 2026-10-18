@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { CORRUPT_BACKUP_KEY, SAVE_KEY, createDefaultSave, loadSave, migrateTopicsFromV1, parseSave, writeSave } from '../lib/storage'
+import { importProgress } from '../lib/parent'
 import { allTiersOn } from '../lib/topics'
 
 function memoryStorage(initial: Record<string, string> = {}): Storage {
@@ -157,10 +158,10 @@ describe('převod z verze 1', () => {
 
   test('převod reálného v1 save zachová postup a přeloží nastavení', () => {
     const save = parseSave(phoneV1)!
-    expect(save.saveVersion).toBe(2)
+    expect(save.saveVersion).toBe(3)
     expect(save.gold).toBe(131)
     expect(save.owned).toEqual(expect.arrayContaining(['acc-crown', 'dress-pink']))
-    expect(save.equipped).toEqual(phoneV1.equipped)
+    expect(save.equipped).toEqual({ hair: 'hair-ponytail-brown', dress: 'dress-pink', shoes: 'shoes-sneakers-white', 'accessory:head': 'acc-crown' })
     expect(save.badges).toEqual(['first-step', 'times-table-star'])
     expect(save.stats).toEqual({ totalCorrect: 37, multiplicationStreak: 12 })
     expect(save.parentPinHash).toBe('fnv1a:39e21db5')
@@ -201,16 +202,68 @@ describe('převod z verze 1', () => {
     expect(topics.add100).toEqual(['medium', 'hard'])
   })
 
-  test('převedený stav se uloží a načte jako v2', () => {
+  test('převedený stav se uloží a načte jako v3', () => {
     const storage = memoryStorage({ [SAVE_KEY]: JSON.stringify(phoneV1) })
     const loaded = loadSave(storage)
     writeSave(loaded, storage)
-    expect(JSON.parse(storage.getItem(SAVE_KEY)!).saveVersion).toBe(2)
+    expect(JSON.parse(storage.getItem(SAVE_KEY)!).saveVersion).toBe(3)
     expect(loadSave(storage)).toEqual(loaded)
   })
 
   test('poškozený v1 save dá výchozí stav', () => {
     expect(parseSave({ ...phoneV1, gold: -1 })).toBeNull()
     expect(parseSave({ ...phoneV1, settings: { ...phoneV1.settings, minLevel: 3, maxLevel: 2 } })).toBeNull()
+  })
+})
+
+describe('převod z verze 2 a nasazení po místech', () => {
+  const phoneV2 = {
+    ...createDefaultSave(),
+    saveVersion: 2,
+    gold: 131,
+    owned: [...createDefaultSave().owned, 'acc-crown', 'dress-pink', 'acc-glasses'],
+    equipped: { hair: 'hair-ponytail-brown', dress: 'dress-pink', shoes: 'shoes-sneakers-white', accessory: 'acc-crown' },
+    badges: ['first-step', 'times-table-star'],
+    parentPinHash: 'fnv1a:39e21db5',
+  }
+
+  test('korunka nasazená ve verzi 2 skončí na hlavě, zbytek beze změny', () => {
+    const save = parseSave(phoneV2)!
+    expect(save.saveVersion).toBe(3)
+    expect(save.equipped).toEqual({
+      hair: 'hair-ponytail-brown',
+      dress: 'dress-pink',
+      shoes: 'shoes-sneakers-white',
+      'accessory:head': 'acc-crown',
+    })
+    expect(save.gold).toBe(131)
+    expect(save.badges).toEqual(['first-step', 'times-table-star'])
+    expect(save.parentPinHash).toBe('fnv1a:39e21db5')
+    expect(save.owned).toEqual(expect.arrayContaining(['acc-crown', 'dress-pink', 'acc-glasses']))
+  })
+
+  test('víc doplňků na různých místech se ve verzi 3 načte beze změny', () => {
+    const raw = {
+      ...phoneV2,
+      saveVersion: 3,
+      equipped: { hair: 'hair-ponytail-brown', 'accessory:head': 'acc-crown', 'accessory:face': 'acc-glasses' },
+    }
+    expect(parseSave(raw)!.equipped).toEqual(raw.equipped)
+  })
+
+  test('dva kousky na stejném místě: zůstane první', () => {
+    const raw = { ...phoneV2, saveVersion: 3, equipped: { 'accessory:head': 'acc-crown', 'accessory:face': 'acc-bow-pink' } }
+    expect(parseSave(raw)!.equipped).toEqual({ 'accessory:head': 'acc-crown' })
+  })
+
+  test('nevlastněné a neznámé kousky v nasazení zahodí', () => {
+    const raw = { ...phoneV2, saveVersion: 3, equipped: { dress: 'dress-ball-purple', 'accessory:hand': 'nic' } }
+    expect(parseSave(raw)!.equipped).toEqual({})
+  })
+
+  test('záloha ve verzi 2 se nahraje přes import', () => {
+    const imported = importProgress(createDefaultSave(), JSON.stringify(phoneV2))!
+    expect(imported.saveVersion).toBe(3)
+    expect(imported.equipped['accessory:head']).toBe('acc-crown')
   })
 })

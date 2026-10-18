@@ -1,10 +1,8 @@
 import { ITEMS_BY_ID, STARTER_ITEMS } from '../data/items'
 import {
   BADGE_IDS,
-  CATEGORIES,
   TIERS,
   TOPIC_IDS,
-  type Category,
   type Equipped,
   type Practice,
   type PracticeKey,
@@ -21,7 +19,7 @@ import { equipSlot } from './wardrobe'
 
 export const SAVE_KEY = 'panenka_save'
 export const CORRUPT_BACKUP_KEY = 'panenka_save_corrupt'
-export const SAVE_VERSION = 2
+export const SAVE_VERSION = 3
 
 /** Formát verze 1 (před kategoriemi úloh) — jen pro převod starých dat. */
 const V1_PROBLEM_TYPES = ['addSub', 'multiplication', 'missingNumber', 'comparison'] as const
@@ -96,10 +94,13 @@ function parseCommon(raw: Record<string, unknown>) {
   const ownedIds = new Set<string>(STARTER_ITEMS.map((item) => item.id))
   for (const id of owned) if (ITEMS_BY_ID.has(id)) ownedIds.add(id)
 
-  const cleanEquipped: Partial<Record<Category, string>> = {}
-  for (const category of CATEGORIES) {
-    const id = equipped[category]
-    if (typeof id === 'string' && ownedIds.has(id) && ITEMS_BY_ID.get(id)?.category === category) cleanEquipped[category] = id
+  // Nasazení se rozmístí podle kousků, ne podle klíčů — tak projdou verze 1, 2 (klíč „accessory“) i 3.
+  const cleanEquipped: Equipped = {}
+  for (const id of Object.values(equipped)) {
+    const item = typeof id === 'string' && ownedIds.has(id) ? ITEMS_BY_ID.get(id) : undefined
+    if (!item) continue
+    const slot = equipSlot(item)
+    cleanEquipped[slot] ??= item.id
   }
 
   return {
@@ -158,7 +159,7 @@ function parsePractice(value: unknown): Practice {
 
 /** Vrátí platný a vyčištěný save (verze 1 se převede na 2), nebo null, pokud data nejsou použitelná. */
 export function parseSave(raw: unknown): SaveData | null {
-  if (!isRecord(raw) || (raw.saveVersion !== 1 && raw.saveVersion !== SAVE_VERSION)) return null
+  if (!isRecord(raw) || (raw.saveVersion !== 1 && raw.saveVersion !== 2 && raw.saveVersion !== SAVE_VERSION)) return null
   const common = parseCommon(raw)
   if (!common) return null
 

@@ -1,11 +1,11 @@
 import type { Ref } from 'react'
 import { ITEMS_BY_ID } from '../../data/items'
 import { BASE_ASSETS, CANVAS_VIEWBOX } from '../../graphics'
-import { LAYER_ORDER, type Category, type Item } from '../../types'
+import { LAYER_ORDER, type Equipped, type Item } from '../../types'
 import { LayerAsset } from './LayerAsset'
 
 interface DollViewerProps {
-  equipped: Partial<Record<Category, string>>
+  equipped: Equipped
   showBackground?: boolean
   viewBox?: string
   className?: string

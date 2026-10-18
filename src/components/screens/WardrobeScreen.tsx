@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { ITEMS } from '../../data/items'
 import { renderDollPng, shareOrDownload } from '../../lib/photo'
+import { equipSlot } from '../../lib/wardrobe'
 import { CATEGORIES, type Category, type SaveData } from '../../types'
 import { DollViewer } from '../doll/DollViewer'
 import { ItemThumbnail } from '../doll/ItemThumbnail'
@@ -76,7 +77,7 @@ export function WardrobeScreen({ save, onToggleItem }: WardrobeScreenProps) {
 
       <div className="-mx-1 flex gap-3 overflow-x-auto p-1 [scrollbar-width:none]">
         {ownedInCategory.map((item) => {
-          const worn = save.equipped[category] === item.id
+          const worn = save.equipped[equipSlot(item)] === item.id
           return (
             <button
               key={item.id}

@@ -60,7 +60,7 @@ export interface Settings {
 }
 
 export interface SaveData {
-  saveVersion: 2
+  saveVersion: 3
   gold: number
   owned: string[]
   equipped: Equipped
