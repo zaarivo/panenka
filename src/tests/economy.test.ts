@@ -4,8 +4,8 @@ import { createDefaultSave } from '../lib/storage'
 import { seededRng } from './seededRng'
 
 describe('odměny', () => {
-  test('za správnou odpověď 10, na těžších stupních (do 100) 15', () => {
-    expect([1, 2, 3, 4].map((level) => rewardForCorrect(level as 1 | 2 | 3 | 4))).toEqual([10, 10, 15, 15])
+  test('za správnou odpověď lehké a střední 10, těžké 15', () => {
+    expect((['easy', 'medium', 'hard'] as const).map(rewardForCorrect)).toEqual([10, 10, 15])
   })
 
   test('truhla dá 20 až 40 zlaťáků včetně krajních hodnot', () => {

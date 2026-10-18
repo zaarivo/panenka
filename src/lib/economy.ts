@@ -1,10 +1,8 @@
 import { ITEMS_BY_ID } from '../data/items'
-import type { Level, Rng, SaveData } from '../types'
+import type { Rng, SaveData, Tier } from '../types'
 
-export const HARD_LEVEL: Level = 3
-
-export function rewardForCorrect(level: Level): number {
-  return level >= HARD_LEVEL ? 15 : 10
+export function rewardForCorrect(tier: Tier): number {
+  return tier === 'hard' ? 15 : 10
 }
 
 export const CHEST_MIN = 20

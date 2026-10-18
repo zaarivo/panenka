@@ -1,63 +1,70 @@
-import type { Level, Settings } from '../types'
+import { TIERS, type Tier } from '../types'
 
 export const CORRECT_IN_ROW_TO_LEVEL_UP = 5
 export const MISTAKES_IN_ROW_TO_LEVEL_DOWN = 2
+export const CORRECT_IN_ROW_FOR_CHEST = 5
 
-export interface DifficultyState {
-  level: Level
+/** Obtížnost a řady jedné kategorie. Řady platí jen v rámci sezení. */
+export interface TopicProgress {
+  tier: Tier
   correctStreak: number
   mistakeStreak: number
 }
 
-export interface DifficultyUpdate {
-  state: DifficultyState
-  levelChange: -1 | 0 | 1
-  /** Právě padlo 5 správných v řadě — čas na bonusovou truhlu. */
-  streakCompleted: boolean
+export interface TopicProgressUpdate {
+  progress: TopicProgress
+  tierChange: -1 | 0 | 1
 }
 
-type LevelLimits = Pick<Settings, 'minLevel' | 'maxLevel'>
+const index = (tier: Tier) => TIERS.indexOf(tier)
 
-export function clampLevel(level: number, { minLevel, maxLevel }: LevelLimits): Level {
-  return Math.min(Math.max(level, minLevel), maxLevel) as Level
+/** Nejbližší zaškrtnutá obtížnost v daném směru (mezery se přeskočí); na kraji zůstane. */
+export function stepTier(tier: Tier, allowed: readonly Tier[], direction: 1 | -1): Tier {
+  const candidates = TIERS.filter((t) => allowed.includes(t) && (index(t) - index(tier)) * direction > 0)
+  if (candidates.length === 0) return tier
+  return direction === 1 ? candidates[0] : candidates[candidates.length - 1]
 }
 
-/** „Je to moc těžké“: hned o stupeň lehčí a obě řady od nuly. */
-export function skipProblem(state: DifficultyState, limits: LevelLimits): DifficultyUpdate {
-  const level = clampLevel(state.level, limits)
-  const next = clampLevel(level - 1, limits)
-  return {
-    state: { level: next, correctStreak: 0, mistakeStreak: 0 },
-    levelChange: (next - level) as -1 | 0,
-    streakCompleted: false,
-  }
+/** Je-li obtížnost zaškrtnutá, zůstane; jinak nejbližší zaškrtnutá, při shodě lehčí. */
+export function clampTier(tier: Tier, allowed: readonly Tier[]): Tier {
+  if (allowed.length === 0 || allowed.includes(tier)) return tier
+  return [...allowed].sort((a, b) => Math.abs(index(a) - index(tier)) - Math.abs(index(b) - index(tier)) || index(a) - index(b))[0]
 }
 
-/** Každý pokus (i opakovaný u téhož příkladu) se počítá jako jedna odpověď. */
-export function updateDifficulty(state: DifficultyState, correct: boolean, limits: LevelLimits): DifficultyUpdate {
-  const level = clampLevel(state.level, limits)
+function change(from: Tier, to: Tier): -1 | 0 | 1 {
+  return Math.sign(index(to) - index(from)) as -1 | 0 | 1
+}
+
+export function updateTopicProgress(progress: TopicProgress, correct: boolean, allowed: readonly Tier[]): TopicProgressUpdate {
+  const tier = clampTier(progress.tier, allowed)
 
   if (correct) {
-    const correctStreak = state.correctStreak + 1
+    const correctStreak = progress.correctStreak + 1
     if (correctStreak < CORRECT_IN_ROW_TO_LEVEL_UP) {
-      return { state: { level, correctStreak, mistakeStreak: 0 }, levelChange: 0, streakCompleted: false }
+      return { progress: { tier, correctStreak, mistakeStreak: 0 }, tierChange: 0 }
     }
-    const next = clampLevel(level + 1, limits)
-    return {
-      state: { level: next, correctStreak: 0, mistakeStreak: 0 },
-      levelChange: (next - level) as 0 | 1,
-      streakCompleted: true,
-    }
+    const next = stepTier(tier, allowed, 1)
+    return { progress: { tier: next, correctStreak: 0, mistakeStreak: 0 }, tierChange: change(tier, next) }
   }
 
-  const mistakeStreak = state.mistakeStreak + 1
+  const mistakeStreak = progress.mistakeStreak + 1
   if (mistakeStreak < MISTAKES_IN_ROW_TO_LEVEL_DOWN) {
-    return { state: { level, correctStreak: 0, mistakeStreak }, levelChange: 0, streakCompleted: false }
+    return { progress: { tier, correctStreak: 0, mistakeStreak }, tierChange: 0 }
   }
-  const next = clampLevel(level - 1, limits)
-  return {
-    state: { level: next, correctStreak: 0, mistakeStreak: 0 },
-    levelChange: (next - level) as -1 | 0,
-    streakCompleted: false,
-  }
+  const next = stepTier(tier, allowed, -1)
+  return { progress: { tier: next, correctStreak: 0, mistakeStreak: 0 }, tierChange: change(tier, next) }
+}
+
+/** „Je to moc těžké“: hned o obtížnost níž a obě řady od nuly. */
+export function skipTopicProgress(progress: TopicProgress, allowed: readonly Tier[]): TopicProgressUpdate {
+  const tier = clampTier(progress.tier, allowed)
+  const next = stepTier(tier, allowed, -1)
+  return { progress: { tier: next, correctStreak: 0, mistakeStreak: 0 }, tierChange: change(tier, next) }
+}
+
+/** Truhla je společná pro všechny kategorie: 5 správně v řadě. */
+export function updateChestStreak(streak: number, correct: boolean): { streak: number; chest: boolean } {
+  if (!correct) return { streak: 0, chest: false }
+  const next = streak + 1
+  return next >= CORRECT_IN_ROW_FOR_CHEST ? { streak: 0, chest: true } : { streak: next, chest: false }
 }
