@@ -4,6 +4,53 @@
   --animate-pop: pop 180ms ease-out;
   --animate-float-up: float-up 1100ms ease-out forwards;
   --animate-wiggle: wiggle 700ms ease-in-out infinite;
+  --animate-medal-drop: medal-drop 1.1s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  --animate-medal-shine: medal-shine 2.4s ease-in-out 1.1s infinite;
+  --animate-medal-rays: medal-rays 9s linear infinite;
+  --animate-confetti: confetti 2.6s linear infinite both;
+  --animate-appear: appear 600ms ease-out both;
+}
+
+@keyframes medal-drop {
+  0% {
+    transform: translateY(-120vh) rotate(-25deg) scale(0.4);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes medal-shine {
+  50% {
+    transform: scale(1.06) rotate(3deg);
+  }
+}
+
+@keyframes medal-rays {
+  from {
+    transform: translate(-50%, -50%) rotate(0);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes confetti {
+  from {
+    transform: translateY(0) rotate(0);
+  }
+  to {
+    transform: translateY(110vh) rotate(540deg);
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes float-up {

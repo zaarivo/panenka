@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { BadgeCelebration } from './components/fame/BadgeCelebration'
+import { MedalCelebration } from './components/fame/MedalCelebration'
 import { LockScreen } from './components/lock/LockScreen'
 import { PracticePicker } from './components/lock/PracticePicker'
 import { TimePicker } from './components/lock/TimePicker'
@@ -9,11 +10,12 @@ import { ParentGate } from './components/parent/ParentGate'
 import { ParentPanel } from './components/parent/ParentPanel'
 import { PinSetupScreen } from './components/parent/PinSetupScreen'
 import { AcademyScreen } from './components/screens/AcademyScreen'
-import { HallOfFameScreen } from './components/screens/HallOfFameScreen'
+import { MedalsScreen } from './components/screens/MedalsScreen'
 import { ShopScreen } from './components/screens/ShopScreen'
 import { WardrobeScreen } from './components/screens/WardrobeScreen'
 import { useGameState } from './hooks/useGameState'
 import { usePlayTime, type TimeChoice } from './hooks/usePlayTime'
+import { celebrationKey } from './lib/celebrations'
 import type { Problem } from './lib/mathGenerator'
 import { verifyPin } from './lib/parent'
 import { toggleTier } from './lib/topics'
@@ -127,17 +129,25 @@ export default function App() {
             onGoToShop={() => setTab('shop')}
             lockRequested={playTime.expired}
             onBusyChange={setAcademyBusy}
-            active={tab === 'academy' && parent === 'closed'}
+            active={tab === 'academy' && parent === 'closed' && !celebration}
           />
         </div>
-        {tab === 'fame' && <HallOfFameScreen save={save} onOpenParent={() => setParent('gate')} />}
+        {tab === 'medals' && <MedalsScreen save={save} onOpenParent={() => setParent('gate')} />}
       </main>
       <Navigation active={tab} onChange={setTab} />
 
-      {celebration && parent === 'closed' && (
+      {celebration?.kind === 'medal' && parent === 'closed' && (
+        <MedalCelebration
+          key={celebrationKey(celebration)}
+          medal={celebration.medal}
+          soundOn={settings.soundOn}
+          onClose={game.dismissCelebration}
+        />
+      )}
+      {celebration?.kind === 'badge' && parent === 'closed' && (
         <BadgeCelebration
-          key={celebration.id}
-          badge={celebration}
+          key={celebrationKey(celebration)}
+          badge={celebration.badge}
           soundOn={settings.soundOn}
           onClose={game.dismissCelebration}
           onShowWardrobe={() => setTab('wardrobe')}

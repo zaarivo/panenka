@@ -1,5 +1,5 @@
 import { TOPIC_IDS, type SaveData, type Tier, type TopicId, type TopicSettings } from '../types'
-import { awardBadges } from './badges'
+import { awardAchievements } from './celebrations'
 import { clampTier } from './difficulty'
 import { clearTiers, snooze, type Recommendation } from './practice'
 import { createDefaultSave, parseSave } from './storage'
@@ -87,5 +87,5 @@ export function importProgress(current: SaveData, text: string): SaveData | null
   }
   const parsed = parseSave(raw)
   if (!parsed) return null
-  return awardBadges({ ...parsed, parentPinHash: parsed.parentPinHash ?? current.parentPinHash }).save
+  return awardAchievements({ ...parsed, parentPinHash: parsed.parentPinHash ?? current.parentPinHash })
 }

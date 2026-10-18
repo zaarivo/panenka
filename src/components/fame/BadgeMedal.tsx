@@ -5,6 +5,8 @@ const COLORS: Record<BadgeId, { ribbon: string; face: string; line: string }> = 
   'first-step': { ribbon: '#f9a8d4', face: '#fbcfe8', line: '#db2777' },
   'times-table-star': { ribbon: '#fde047', face: '#facc15', line: '#ca8a04' },
   'diligent-pupil': { ribbon: '#c4b5fd', face: '#ddd6fe', line: '#7c3aed' },
+  'clever-counter': { ribbon: '#93c5fd', face: '#e2e8f0', line: '#64748b' },
+  'counting-queen': { ribbon: '#f9a8d4', face: '#fde047', line: '#ca8a04' },
 }
 
 const LOCKED = { ribbon: '#e5e7eb', face: '#f3f4f6', line: '#9ca3af' }
@@ -16,7 +18,7 @@ function Emblem({ id, color }: { id: BadgeId; color: string }) {
   }
   return (
     <text x="32" y="48" textAnchor="middle" fontSize="15" fontWeight="bold" fontFamily="system-ui, sans-serif" fill={color}>
-      100
+      {id === 'clever-counter' ? 200 : id === 'counting-queen' ? 300 : 100}
     </text>
   )
 }

@@ -1,32 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { addGold, applyCorrectAnswer, applySkippedProblem, applyWrongAnswer } from '../lib/academy'
-import { BADGES, awardBadges, type Badge } from '../lib/badges'
+import { awardAchievements as award, newCelebrations, type Celebration, type Known } from '../lib/celebrations'
 import { buyItem, rewardForCorrect, type BuyResult } from '../lib/economy'
 import type { Problem } from '../lib/mathGenerator'
 import { acceptRecommendation, hashPin, resetProgress, snoozeRecommendation, updateTopics } from '../lib/parent'
 import type { Recommendation } from '../lib/practice'
 import { loadSave, writeSave } from '../lib/storage'
 import { toggleEquip } from '../lib/wardrobe'
-import type { BadgeId, SaveData, Tier, TopicSettings } from '../types'
+import type { SaveData, Tier, TopicSettings } from '../types'
 
 export function useGameState() {
-  const [save, setSave] = useState<SaveData>(() => awardBadges(loadSave()).save)
-  const [celebrations, setCelebrations] = useState<Badge[]>([])
+  const [save, setSave] = useState<SaveData>(() => award(loadSave()))
+  const [celebrations, setCelebrations] = useState<Celebration[]>([])
   /** Mění se při resetu a importu, aby Akademie začala znovu s novým stavem. */
   const [generation, setGeneration] = useState(0)
-  const knownBadges = useRef<readonly BadgeId[]>(save.badges)
+  const known = useRef<Known>({ badges: save.badges, medals: save.medals })
 
   useEffect(() => {
     writeSave(save)
   }, [save])
 
   useEffect(() => {
-    const fresh = save.badges.filter((id) => !knownBadges.current.includes(id))
-    knownBadges.current = save.badges
-    if (fresh.length > 0) {
-      setCelebrations((queue) => [...queue, ...BADGES.filter((badge) => fresh.includes(badge.id))])
-    }
-  }, [save.badges])
+    const fresh = newCelebrations(known.current, save)
+    known.current = { badges: save.badges, medals: save.medals }
+    if (fresh.length > 0) setCelebrations((queue) => [...queue, ...fresh])
+  }, [save])
 
   const dismissCelebration = useCallback(() => setCelebrations((queue) => queue.slice(1)), [])
 
@@ -42,7 +40,7 @@ export function useGameState() {
   )
 
   const answerCorrect = useCallback((problem: Problem, nextTier: Tier, success: boolean): number => {
-    setSave((current) => awardBadges(applyCorrectAnswer(current, problem, nextTier, success).save).save)
+    setSave((current) => award(applyCorrectAnswer(current, problem, nextTier, success).save))
     return rewardForCorrect(problem.tier)
   }, [])
 
@@ -79,7 +77,7 @@ export function useGameState() {
 
   /** Nový stav bez oslav — odznaky z importu nebo po resetu se neoslavují. */
   const replaceSave = useCallback((next: SaveData) => {
-    knownBadges.current = next.badges
+    known.current = { badges: next.badges, medals: next.medals }
     setCelebrations([])
     setSave(next)
     setGeneration((value) => value + 1)

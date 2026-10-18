@@ -1,9 +1,11 @@
 import { ITEMS_BY_ID, STARTER_ITEMS } from '../data/items'
 import {
   BADGE_IDS,
+  MEDAL_TIERS,
   TIERS,
   TOPIC_IDS,
   type Equipped,
+  type MedalId,
   type Practice,
   type PracticeKey,
   type PracticeRecord,
@@ -12,6 +14,7 @@ import {
   type TopicId,
   type TopicSettings,
 } from '../types'
+import { ROYAL_TARGET } from './badges'
 import { clampTier } from './difficulty'
 import { RECENT_WINDOW } from './practice'
 import { allTiersOn, sortTiers } from './topics'
@@ -19,7 +22,14 @@ import { equipSlot } from './wardrobe'
 
 export const SAVE_KEY = 'panenka_save'
 export const CORRUPT_BACKUP_KEY = 'panenka_save_corrupt'
-export const SAVE_VERSION = 3
+export const SAVE_VERSION = 4
+
+/** Zlatá korunka se do verze 3 dávala za Násobilkovou hvězdu; od verze 4 až za odznak za 300 správných. */
+const GOLD_CROWN = 'acc-crown'
+
+const ALL_MEDAL_IDS: readonly MedalId[] = TOPIC_IDS.flatMap((topic) => MEDAL_TIERS.map((tier) => `${topic}:${tier}` as const))
+
+const zeroByTopic = () => Object.fromEntries(TOPIC_IDS.map((topic) => [topic, 0])) as Record<TopicId, number>
 
 /** Formát verze 1 (před kategoriemi úloh) — jen pro převod starých dat. */
 const V1_PROBLEM_TYPES = ['addSub', 'multiplication', 'missingNumber', 'comparison'] as const
@@ -41,7 +51,8 @@ export function createDefaultSave(): SaveData {
     owned: STARTER_ITEMS.map((item) => item.id),
     equipped,
     badges: [],
-    stats: { totalCorrect: 0, multiplicationStreak: 0 },
+    stats: { totalCorrect: 0, multiplicationStreak: 0, correctByTopic: zeroByTopic() },
+    medals: [],
     currentTier: lowestTiers(topics),
     practice: {},
     settings: { soundOn: true, topics },
@@ -157,11 +168,33 @@ function parsePractice(value: unknown): Practice {
   return practice
 }
 
-/** Vrátí platný a vyčištěný save (verze 1 se převede na 2), nebo null, pokud data nejsou použitelná. */
+function parseCorrectByTopic(value: unknown): Record<TopicId, number> {
+  const counts = zeroByTopic()
+  if (!isRecord(value)) return counts
+  for (const topic of TOPIC_IDS) {
+    const count = value[topic]
+    if (isNonNegativeInt(count)) counts[topic] = count
+  }
+  return counts
+}
+
+function parseMedals(value: unknown): MedalId[] {
+  return Array.isArray(value) ? ALL_MEDAL_IDS.filter((id) => value.includes(id)) : []
+}
+
+/** Odebere Zlatou korunku z vlastněných i nasazených kousků (jednorázově při převodu ze starší verze). */
+function withoutGoldCrown<T extends { owned: string[]; equipped: Equipped }>(common: T): T {
+  const equipped = Object.fromEntries(Object.entries(common.equipped).filter(([, id]) => id !== GOLD_CROWN)) as Equipped
+  return { ...common, owned: common.owned.filter((id) => id !== GOLD_CROWN), equipped }
+}
+
+/** Vrátí platný a vyčištěný save (verze 1–3 se převedou na 4), nebo null, pokud data nejsou použitelná. */
 export function parseSave(raw: unknown): SaveData | null {
-  if (!isRecord(raw) || (raw.saveVersion !== 1 && raw.saveVersion !== 2 && raw.saveVersion !== SAVE_VERSION)) return null
-  const common = parseCommon(raw)
-  if (!common) return null
+  if (!isRecord(raw) || ![1, 2, 3, SAVE_VERSION].includes(raw.saveVersion as number)) return null
+  const parsed = parseCommon(raw)
+  if (!parsed) return null
+  const isV4 = raw.saveVersion === SAVE_VERSION
+  const common = !isV4 && parsed.stats.totalCorrect < ROYAL_TARGET ? withoutGoldCrown(parsed) : parsed
 
   const isV1 = raw.saveVersion === 1
   const topics = isV1 ? parseV1Topics(common.settings) : parseV2Topics(common.settings)
@@ -182,7 +215,8 @@ export function parseSave(raw: unknown): SaveData | null {
     owned: common.owned,
     equipped: common.equipped,
     badges: common.badges,
-    stats: common.stats,
+    stats: { ...common.stats, correctByTopic: isV4 ? parseCorrectByTopic((raw.stats as Record<string, unknown>).correctByTopic) : zeroByTopic() },
+    medals: isV4 ? parseMedals(raw.medals) : [],
     currentTier,
     practice: isV1 ? {} : parsePractice(raw.practice),
     settings: { soundOn: common.soundOn, topics },

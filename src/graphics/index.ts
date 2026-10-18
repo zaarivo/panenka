@@ -38,6 +38,8 @@ const SLOT_THUMBNAIL: Record<AccessorySlot, string> = {
 const ASSET_THUMBNAIL: Readonly<Record<string, string>> = {
   'acc-bow-pink': '76 28 148 148',
   'acc-crown': '76 22 148 148',
+  'acc-crown-silver': '76 22 148 148',
+  'acc-crown-bronze': '76 22 148 148',
   'acc-glasses': '84 84 132 100',
   'acc-necklace': '104 186 92 72',
   'acc-bag': '176 318 76 92',

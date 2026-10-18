@@ -18,11 +18,11 @@ function Bow({ fill, line, knot }: Tone & { knot: string }) {
   )
 }
 
-function Crown() {
+function Crown({ fill, line, band }: { fill: string; line: string; band: string }) {
   return (
     <g strokeLinejoin="round" strokeLinecap="round">
-      <path d="M114 78 L118 44 L134 62 L150 34 L166 62 L182 44 L186 78 Z" fill="#facc15" stroke="#ca8a04" strokeWidth="2" />
-      <rect x="112" y="70" width="76" height="12" rx="4" fill="#fde047" stroke="#ca8a04" strokeWidth="2" />
+      <path d="M114 78 L118 44 L134 62 L150 34 L166 62 L182 44 L186 78 Z" fill={fill} stroke={line} strokeWidth="2" />
+      <rect x="112" y="70" width="76" height="12" rx="4" fill={band} stroke={line} strokeWidth="2" />
       <circle cx="150" cy="58" r="5" fill="#f472b6" stroke="#be185d" strokeWidth="1.5" />
       <circle cx="128" cy="76" r="3.5" fill="#60a5fa" />
       <circle cx="150" cy="76" r="3.5" fill="#34d399" />
@@ -230,7 +230,9 @@ function HeartEarrings() {
 export const ACCESSORY_ASSETS: Readonly<Record<string, ComponentType>> = {
   'acc-bow-pink': () => <Bow fill="#f472b6" line="#db2777" knot="#f9a8d4" />,
   'acc-bow-blue': () => <Bow fill="#60a5fa" line="#2563eb" knot="#bfdbfe" />,
-  'acc-crown': Crown,
+  'acc-crown': () => <Crown fill="#facc15" line="#ca8a04" band="#fde047" />,
+  'acc-crown-silver': () => <Crown fill="#e2e8f0" line="#64748b" band="#f1f5f9" />,
+  'acc-crown-bronze': () => <Crown fill="#d97706" line="#92400e" band="#f59e0b" />,
   'acc-headband-pink': () => <Headband fill="#f9a8d4" line="#db2777" />,
   'acc-headband-blue': () => <Headband fill="#93c5fd" line="#2563eb" />,
   'acc-hat-straw': StrawHat,

@@ -56,5 +56,7 @@
   { "id": "acc-earrings-pearl", "name": "Perlové náušnice", "category": "accessory", "price": 70, "layer": "accessory", "asset": "acc-earrings-pearl", "slot": "ears" },
   { "id": "acc-earrings-heart", "name": "Srdíčkové náušnice", "category": "accessory", "price": 80, "layer": "accessory", "asset": "acc-earrings-heart", "slot": "ears" },
 
-  { "id": "acc-crown", "name": "Zlatá korunka", "category": "accessory", "price": null, "layer": "accessory", "asset": "acc-crown", "slot": "head", "unlockBadge": "times-table-star" }
+  { "id": "acc-crown", "name": "Zlatá korunka", "category": "accessory", "price": null, "layer": "accessory", "asset": "acc-crown", "slot": "head", "unlockBadge": "counting-queen" },
+  { "id": "acc-crown-bronze", "name": "Bronzová korunka", "category": "accessory", "price": null, "layer": "accessory", "asset": "acc-crown-bronze", "slot": "head", "unlockBadge": "diligent-pupil" },
+  { "id": "acc-crown-silver", "name": "Stříbrná korunka", "category": "accessory", "price": null, "layer": "accessory", "asset": "acc-crown-silver", "slot": "head", "unlockBadge": "clever-counter" }
 ]

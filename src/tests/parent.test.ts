@@ -89,7 +89,8 @@ describe('reset', () => {
       gold: 300,
       owned: [...base.owned, 'dress-pink'],
       badges: ['first-step'],
-      stats: { totalCorrect: 50, multiplicationStreak: 3 },
+      stats: { totalCorrect: 50, multiplicationStreak: 3, correctByTopic: { ...base.stats.correctByTopic, add20: 40 } },
+      medals: ['add20:bronze'],
       currentTier: { ...base.currentTier, add20: 'hard' },
       practice: { 'add20:hard': record(5, 10) },
       parentPinHash: hashPin('1111'),
@@ -99,7 +100,8 @@ describe('reset', () => {
     expect(reset.gold).toBe(0)
     expect(reset.owned).toEqual(base.owned)
     expect(reset.badges).toEqual([])
-    expect(reset.stats).toEqual({ totalCorrect: 0, multiplicationStreak: 0 })
+    expect(reset.stats).toEqual(createDefaultSave().stats)
+    expect(reset.medals).toEqual([])
     expect(reset.practice).toEqual({})
     expect(reset.currentTier.add20).toBe('medium')
     expect(reset.parentPinHash).toBe(save.parentPinHash)
@@ -128,11 +130,17 @@ describe('export a import', () => {
     expect(imported?.parentPinHash).toBe(current.parentPinHash)
   })
 
-  test('import doplní odznaky a korunku podle statistik', () => {
-    const text = exportProgress({ ...createDefaultSave(), stats: { totalCorrect: 12, multiplicationStreak: 10 } })
+  test('import doplní odznaky podle statistik, Násobilková hvězda korunku nedá', () => {
+    const text = exportProgress({ ...createDefaultSave(), stats: { ...createDefaultSave().stats, totalCorrect: 12, multiplicationStreak: 10 } })
     const imported = importProgress(createDefaultSave(), text)!
     expect(imported.badges).toEqual(['first-step', 'times-table-star'])
-    expect(imported.owned).toContain('acc-crown')
+    expect(imported.owned).not.toContain('acc-crown')
+  })
+
+  test('import doplní medaile podle počtů', () => {
+    const base = createDefaultSave()
+    const text = exportProgress({ ...base, medals: [], stats: { ...base.stats, correctByTopic: { ...base.stats.correctByTopic, add20: 50 } } })
+    expect(importProgress(base, text)!.medals).toEqual(['add20:bronze'])
   })
 
   test('záloha ve verzi 1 se nahraje a převede', () => {
@@ -148,7 +156,7 @@ describe('export a import', () => {
       parentPinHash: null,
     }
     const imported = importProgress({ ...createDefaultSave(), parentPinHash: hashPin('1234') }, JSON.stringify(v1))!
-    expect(imported.saveVersion).toBe(3)
+    expect(imported.saveVersion).toBe(4)
     expect(imported.gold).toBe(40)
     expect(imported.settings.topics.multiplication).toEqual(['easy'])
     expect(imported.parentPinHash).toBe(hashPin('1234'))
