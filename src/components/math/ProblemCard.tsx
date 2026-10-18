@@ -3,16 +3,18 @@ import type { Problem } from '../../lib/mathGenerator'
 interface ProblemCardProps {
   problem: Problem
   answer: string
-  state: 'answering' | 'wrong' | 'correct'
+  state: 'answering' | 'wrong' | 'correct' | 'revealed'
+}
+
+const SLOT_STYLES: Record<ProblemCardProps['state'], string> = {
+  answering: 'border-pink-300 bg-pink-50 text-pink-600',
+  wrong: 'border-amber-300 bg-amber-50 text-amber-600',
+  correct: 'border-emerald-400 bg-emerald-50 text-emerald-600',
+  revealed: 'border-violet-300 bg-violet-50 text-violet-600',
 }
 
 export function ProblemCard({ problem, answer, state }: ProblemCardProps) {
-  const slotStyle =
-    state === 'correct'
-      ? 'border-emerald-400 bg-emerald-50 text-emerald-600'
-      : state === 'wrong'
-        ? 'border-amber-300 bg-amber-50 text-amber-600'
-        : 'border-pink-300 bg-pink-50 text-pink-600'
+  const slotStyle = SLOT_STYLES[state]
 
   return (
     <div

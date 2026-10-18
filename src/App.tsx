@@ -36,6 +36,7 @@ export default function App() {
             save={save}
             onCorrect={game.answerCorrect}
             onWrong={game.answerWrong}
+            onSkip={game.skipProblem}
             onReceiveGold={game.receiveGold}
             onSoundChange={game.setSoundOn}
             onGoToShop={() => setTab('shop')}

@@ -33,6 +33,11 @@ export function applyWrongAnswer(save: SaveData, problem: Problem, nextLevel: Le
   }
 }
 
+/** Přeskočení se ukládá stejně jako chyba: bez zlaťáků a s přerušenou řadou násobilky. */
+export function applySkippedProblem(save: SaveData, problem: Problem, nextLevel: Level): SaveData {
+  return applyWrongAnswer(save, problem, nextLevel)
+}
+
 export function addGold(save: SaveData, amount: number): SaveData {
   return { ...save, gold: save.gold + Math.max(0, Math.floor(amount)) }
 }

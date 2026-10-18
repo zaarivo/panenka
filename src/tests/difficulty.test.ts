@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { updateDifficulty, type DifficultyState } from '../lib/difficulty'
+import { skipProblem, updateDifficulty, type DifficultyState } from '../lib/difficulty'
 import type { Level } from '../types'
 
 const FULL = { minLevel: 1, maxLevel: 4 } as const
@@ -64,5 +64,20 @@ describe('adaptivní obtížnost', () => {
   test('úroveň mimo nové meze od rodiče se nejdřív srovná', () => {
     const update = updateDifficulty({ level: 4, correctStreak: 0, mistakeStreak: 0 }, true, { minLevel: 1, maxLevel: 2 })
     expect(update.state.level).toBe(2)
+  })
+})
+
+describe('přeskočení příkladu', () => {
+  test('sníží stupeň o jeden a vynuluje obě řady', () => {
+    const update = skipProblem({ level: 3, correctStreak: 4, mistakeStreak: 1 }, FULL)
+    expect(update.state).toEqual({ level: 2, correctStreak: 0, mistakeStreak: 0 })
+    expect(update.levelChange).toBe(-1)
+    expect(update.streakCompleted).toBe(false)
+  })
+
+  test('na minimu od rodiče stupeň neklesne', () => {
+    const update = skipProblem({ level: 2, correctStreak: 2, mistakeStreak: 0 }, { minLevel: 2, maxLevel: 4 })
+    expect(update.state.level).toBe(2)
+    expect(update.levelChange).toBe(0)
   })
 })

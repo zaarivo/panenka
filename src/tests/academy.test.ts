@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { addGold, applyCorrectAnswer, applyWrongAnswer } from '../lib/academy'
+import { addGold, applyCorrectAnswer, applySkippedProblem, applyWrongAnswer } from '../lib/academy'
 import type { Problem } from '../lib/mathGenerator'
 import { createDefaultSave } from '../lib/storage'
 
@@ -43,6 +43,22 @@ describe('chybná odpověď', () => {
 
   test('uloží snížený stupeň', () => {
     expect(applyWrongAnswer({ ...createDefaultSave(), level: 3 }, addition, 2).level).toBe(2)
+  })
+})
+
+describe('přeskočený příklad', () => {
+  test('nedá zlaťáky ani se nezapočítá jako správný a uloží nižší stupeň', () => {
+    const save = { ...createDefaultSave(), gold: 30, level: 2 as const, stats: { totalCorrect: 5, multiplicationStreak: 0 } }
+    const after = applySkippedProblem(save, addition, 1)
+    expect(after.gold).toBe(30)
+    expect(after.stats.totalCorrect).toBe(5)
+    expect(after.level).toBe(1)
+  })
+
+  test('přeskočená násobilka přeruší řadu k Násobilkové hvězdě, jiný příklad ne', () => {
+    const save = { ...createDefaultSave(), stats: { totalCorrect: 5, multiplicationStreak: 4 } }
+    expect(applySkippedProblem(save, multiplication, 1).stats.multiplicationStreak).toBe(0)
+    expect(applySkippedProblem(save, addition, 1).stats.multiplicationStreak).toBe(4)
   })
 })
 

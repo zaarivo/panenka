@@ -22,6 +22,17 @@ export function clampLevel(level: number, { minLevel, maxLevel }: LevelLimits): 
   return Math.min(Math.max(level, minLevel), maxLevel) as Level
 }
 
+/** „Je to moc těžké“: hned o stupeň lehčí a obě řady od nuly. */
+export function skipProblem(state: DifficultyState, limits: LevelLimits): DifficultyUpdate {
+  const level = clampLevel(state.level, limits)
+  const next = clampLevel(level - 1, limits)
+  return {
+    state: { level: next, correctStreak: 0, mistakeStreak: 0 },
+    levelChange: (next - level) as -1 | 0,
+    streakCompleted: false,
+  }
+}
+
 /** Každý pokus (i opakovaný u téhož příkladu) se počítá jako jedna odpověď. */
 export function updateDifficulty(state: DifficultyState, correct: boolean, limits: LevelLimits): DifficultyUpdate {
   const level = clampLevel(state.level, limits)

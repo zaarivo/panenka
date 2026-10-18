@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { addGold, applyCorrectAnswer, applyWrongAnswer } from '../lib/academy'
+import { addGold, applyCorrectAnswer, applySkippedProblem, applyWrongAnswer } from '../lib/academy'
 import { BADGES, awardBadges, type Badge } from '../lib/badges'
 import { buyItem, rewardForCorrect, type BuyResult } from '../lib/economy'
 import type { Problem } from '../lib/mathGenerator'
@@ -50,6 +50,11 @@ export function useGameState() {
     [],
   )
 
+  const skipProblem = useCallback(
+    (problem: Problem, nextLevel: Level) => setSave((current) => applySkippedProblem(current, problem, nextLevel)),
+    [],
+  )
+
   const receiveGold = useCallback((amount: number) => setSave((current) => addGold(current, amount)), [])
 
   const setSoundOn = useCallback(
@@ -83,6 +88,7 @@ export function useGameState() {
     buy,
     answerCorrect,
     answerWrong,
+    skipProblem,
     receiveGold,
     setSoundOn,
     setPin,

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ROUND_SIZE } from '../../lib/academy'
 import { formatGold } from '../../lib/czech'
-import { CORRECT_IN_ROW_TO_LEVEL_UP, updateDifficulty, type DifficultyState } from '../../lib/difficulty'
+import { CORRECT_IN_ROW_TO_LEVEL_UP, skipProblem, updateDifficulty, type DifficultyState } from '../../lib/difficulty'
 import { rollChestReward } from '../../lib/economy'
 import { generateProblem, isCorrectAnswer, type CompareSign, type Problem } from '../../lib/mathGenerator'
 import { playChest, playCoin } from '../../lib/sound'
@@ -17,18 +17,27 @@ import { SoundOffIcon, SoundOnIcon } from '../ui/icons'
 const PRAISE = ['Správně!', 'Výborně!', 'Super!', 'Paráda!', 'Skvělé!']
 const NEXT_PROBLEM_DELAY_MS = 1200
 
-type Phase = 'answering' | 'wrong' | 'correct' | 'chest' | 'summary'
+type Phase = 'answering' | 'wrong' | 'correct' | 'skipped' | 'chest' | 'summary'
 
 interface AcademyScreenProps {
   save: SaveData
   onCorrect: (problem: Problem, nextLevel: Level) => number
   onWrong: (problem: Problem, nextLevel: Level) => void
+  onSkip: (problem: Problem, nextLevel: Level) => void
   onReceiveGold: (amount: number) => void
   onSoundChange: (soundOn: boolean) => void
   onGoToShop: () => void
 }
 
-export function AcademyScreen({ save, onCorrect, onWrong, onReceiveGold, onSoundChange, onGoToShop }: AcademyScreenProps) {
+export function AcademyScreen({
+  save,
+  onCorrect,
+  onWrong,
+  onSkip,
+  onReceiveGold,
+  onSoundChange,
+  onGoToShop,
+}: AcademyScreenProps) {
   const { settings } = save
   const [difficulty, setDifficulty] = useState<DifficultyState>({ level: save.level, correctStreak: 0, mistakeStreak: 0 })
   const [problem, setProblem] = useState(() => generateProblem({ types: settings.enabledTypes, level: save.level }))
@@ -42,6 +51,7 @@ export function AcademyScreen({ save, onCorrect, onWrong, onReceiveGold, onSound
   const [chestPending, setChestPending] = useState(false)
   const [chestReward, setChestReward] = useState<number | null>(null)
   const [hintVisible, setHintVisible] = useState(false)
+  const [easier, setEasier] = useState(false)
 
   function nextProblem() {
     setProblem((previous) =>
@@ -93,6 +103,17 @@ export function AcademyScreen({ save, onCorrect, onWrong, onReceiveGold, onSound
     setLevelUp(update.levelChange === 1)
     setPraise(PRAISE[Math.floor(Math.random() * PRAISE.length)])
     setPhase('correct')
+  }
+
+  function skip() {
+    if (phase !== 'answering' && phase !== 'wrong') return
+    const update = skipProblem(difficulty, settings)
+    setDifficulty(update.state)
+    onSkip(problem, update.state.level)
+    setEasier(update.levelChange === -1)
+    setInput(String(problem.answer))
+    setHintVisible(false)
+    setPhase('skipped')
   }
 
   function openChest() {
@@ -150,7 +171,8 @@ export function AcademyScreen({ save, onCorrect, onWrong, onReceiveGold, onSound
 
       <div className="flex items-center justify-between text-base font-semibold text-violet-500">
         <span>
-          Příklad {Math.min(phase === 'answering' || phase === 'wrong' ? solved + 1 : solved, ROUND_SIZE)} z {ROUND_SIZE}
+          Příklad {Math.min(phase === 'correct' || phase === 'chest' || phase === 'summary' ? solved : solved + 1, ROUND_SIZE)} z{' '}
+          {ROUND_SIZE}
         </span>
         <span className="flex items-center gap-1" aria-label={`Správně v řadě: ${difficulty.correctStreak} z ${CORRECT_IN_ROW_TO_LEVEL_UP}`}>
           {Array.from({ length: CORRECT_IN_ROW_TO_LEVEL_UP }, (_, i) => (
@@ -168,7 +190,11 @@ export function AcademyScreen({ save, onCorrect, onWrong, onReceiveGold, onSound
         </span>
       </div>
 
-      <ProblemCard problem={problem} answer={input} state={phase === 'correct' ? 'correct' : phase === 'wrong' ? 'wrong' : 'answering'} />
+      <ProblemCard
+        problem={problem}
+        answer={input}
+        state={phase === 'correct' ? 'correct' : phase === 'wrong' ? 'wrong' : phase === 'skipped' ? 'revealed' : 'answering'}
+      />
 
       <div className="flex min-h-20 flex-col justify-center rounded-2xl px-3 text-center text-lg" role="status">
         {phase === 'correct' && (
@@ -176,7 +202,13 @@ export function AcademyScreen({ save, onCorrect, onWrong, onReceiveGold, onSound
             {praise} +{reward?.amount} {levelUp && <span className="block text-base text-violet-500">Jdeš na těžší příklady!</span>}
           </p>
         )}
-        {phase !== 'correct' && hintVisible && (
+        {phase === 'skipped' && (
+          <p className="font-bold text-violet-600">
+            Nevadí! Správně je {problem.answer}.
+            {easier && <span className="block text-base font-normal text-violet-500">Další příklad bude o kousek lehčí.</span>}
+          </p>
+        )}
+        {(phase === 'answering' || phase === 'wrong') && hintVisible && (
           <div className="rounded-2xl bg-amber-50 p-3 text-amber-800">
             <p className="font-bold">Skoro! Zkus to znovu.</p>
             <p className="text-base">{problem.hint}</p>
@@ -187,10 +219,29 @@ export function AcademyScreen({ save, onCorrect, onWrong, onReceiveGold, onSound
         )}
       </div>
 
+      {phase === 'skipped' ? (
+        <button
+          type="button"
+          onClick={nextProblem}
+          className="min-h-14 rounded-2xl bg-pink-400 text-lg font-bold text-white shadow-sm active:scale-95"
+        >
+          Další příklad
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={skip}
+          disabled={phase !== 'answering' && phase !== 'wrong'}
+          className="min-h-14 rounded-2xl bg-white/70 text-base font-semibold text-violet-500 active:scale-95 disabled:opacity-40"
+        >
+          Je to moc těžké, přeskočit
+        </button>
+      )}
+
       <div className="mt-auto">
         {isComparison ? (
           <CompareButtons
-            disabled={phase === 'correct'}
+            disabled={phase === 'correct' || phase === 'skipped'}
             onChoose={(sign) => {
               setInput(sign)
               submit(sign)
@@ -204,7 +255,7 @@ export function AcademyScreen({ save, onCorrect, onWrong, onReceiveGold, onSound
               if (phase === 'wrong') setPhase('answering')
             }}
             onSubmit={() => submit(Number(input))}
-            disabled={phase === 'correct'}
+            disabled={phase === 'correct' || phase === 'skipped'}
           />
         )}
       </div>
