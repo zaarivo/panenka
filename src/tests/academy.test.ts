@@ -37,6 +37,17 @@ describe('správná odpověď', () => {
     save = applyCorrectAnswer(save, multiplication, 'medium', true).save
     expect(save.stats.multiplicationStreak).toBe(2)
   })
+
+  test('správná odpověď zvýší počet své kategorie', () => {
+    const { save } = applyCorrectAnswer(createDefaultSave(), multiplication, 'medium', false)
+    expect(save.stats.correctByTopic).toEqual({ ...createDefaultSave().stats.correctByTopic, multiplication: 1 })
+  })
+})
+
+test('chyba a přeskočení počet kategorie nemění', () => {
+  const save = createDefaultSave()
+  expect(applyWrongAnswer(save, multiplication, 'easy').stats.correctByTopic.multiplication).toBe(0)
+  expect(applySkippedProblem(save, multiplication, 'easy').stats.correctByTopic.multiplication).toBe(0)
 })
 
 describe('chybná odpověď', () => {

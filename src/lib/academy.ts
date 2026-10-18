@@ -27,6 +27,7 @@ export function applyCorrectAnswer(
       stats: {
         ...save.stats,
         totalCorrect: save.stats.totalCorrect + 1,
+        correctByTopic: { ...save.stats.correctByTopic, [problem.topic]: save.stats.correctByTopic[problem.topic] + 1 },
         multiplicationStreak:
           problem.topic === 'multiplication' ? save.stats.multiplicationStreak + 1 : save.stats.multiplicationStreak,
       },
