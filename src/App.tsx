@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { BadgeCelebration } from './components/fame/BadgeCelebration'
+import { MedalCelebration } from './components/fame/MedalCelebration'
 import { LockScreen } from './components/lock/LockScreen'
 import { PracticePicker } from './components/lock/PracticePicker'
 import { TimePicker } from './components/lock/TimePicker'
@@ -12,14 +13,12 @@ import { AcademyScreen } from './components/screens/AcademyScreen'
 import { HallOfFameScreen } from './components/screens/HallOfFameScreen'
 import { ShopScreen } from './components/screens/ShopScreen'
 import { WardrobeScreen } from './components/screens/WardrobeScreen'
-import { Dialog } from './components/ui/Dialog'
 import { useGameState } from './hooks/useGameState'
 import { usePlayTime, type TimeChoice } from './hooks/usePlayTime'
 import { celebrationKey } from './lib/celebrations'
 import type { Problem } from './lib/mathGenerator'
-import { MEDAL_NAMES } from './lib/medals'
 import { verifyPin } from './lib/parent'
-import { TOPIC_LABELS, toggleTier } from './lib/topics'
+import { toggleTier } from './lib/topics'
 import type { Tier } from './types'
 
 export default function App() {
@@ -138,16 +137,12 @@ export default function App() {
       <Navigation active={tab} onChange={setTab} />
 
       {celebration?.kind === 'medal' && parent === 'closed' && (
-        <Dialog
+        <MedalCelebration
           key={celebrationKey(celebration)}
-          title={`${MEDAL_NAMES[celebration.medal.tier]}!`}
+          medal={celebration.medal}
+          soundOn={settings.soundOn}
           onClose={game.dismissCelebration}
-          actions={[{ label: 'Hurá!', onClick: game.dismissCelebration, primary: true }]}
-        >
-          <p>
-            {TOPIC_LABELS[celebration.medal.topic]} · {celebration.medal.target} příkladů správně
-          </p>
-        </Dialog>
+        />
       )}
       {celebration?.kind === 'badge' && parent === 'closed' && (
         <BadgeCelebration
