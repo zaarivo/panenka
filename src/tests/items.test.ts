@@ -60,7 +60,7 @@ describe('katalog oblečení', () => {
 
   test('nekoupitelné kousky se odemykají existujícím odznakem', () => {
     const locked = ITEMS.filter((item) => item.price === null)
-    expect(locked.map((item) => item.id)).toEqual(['acc-crown'])
+    expect(locked.map((item) => item.id).sort()).toEqual(['acc-crown', 'acc-crown-bronze', 'acc-crown-silver'])
     for (const item of locked) expect(BADGE_IDS).toContain(item.unlockBadge)
   })
 

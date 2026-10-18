@@ -13,7 +13,7 @@ export const LAYER_ORDER =['background', 'body', 'shoes', 'dress', 'hair', 'acce
 export type Layer = (typeof LAYER_ORDER)[number]
 export type ItemLayer = Exclude<Layer, 'background' | 'body'>
 
-export const BADGE_IDS = ['first-step', 'times-table-star', 'diligent-pupil'] as const
+export const BADGE_IDS = ['first-step', 'times-table-star', 'diligent-pupil', 'clever-counter', 'counting-queen'] as const
 export type BadgeId = (typeof BADGE_IDS)[number]
 
 /** Kategorie úloh („topic“ — `Category` už znamená druh oblečení). */

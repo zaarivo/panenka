@@ -128,11 +128,11 @@ describe('export a import', () => {
     expect(imported?.parentPinHash).toBe(current.parentPinHash)
   })
 
-  test('import doplní odznaky a korunku podle statistik', () => {
+  test('import doplní odznaky podle statistik, Násobilková hvězda korunku nedá', () => {
     const text = exportProgress({ ...createDefaultSave(), stats: { totalCorrect: 12, multiplicationStreak: 10 } })
     const imported = importProgress(createDefaultSave(), text)!
     expect(imported.badges).toEqual(['first-step', 'times-table-star'])
-    expect(imported.owned).toContain('acc-crown')
+    expect(imported.owned).not.toContain('acc-crown')
   })
 
   test('záloha ve verzi 1 se nahraje a převede', () => {

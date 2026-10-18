@@ -20,14 +20,22 @@ describe('odznaky', () => {
     expect(save.badges).toEqual(['first-step', 'diligent-pupil'])
   })
 
-  test('„Násobilková hvězda“ po 10 násobilkách v řadě odemkne korunku', () => {
+  test('Násobilková hvězda už nic neodemyká', () => {
     const { save, newBadges } = awardBadges(withStats(10, 10))
     expect(newBadges.map((b) => b.id)).toContain('times-table-star')
-    expect(save.owned).toContain('acc-crown')
+    expect(save.owned).not.toContain('acc-crown')
   })
 
-  test('9 násobilek v řadě korunku neodemkne', () => {
-    expect(awardBadges(withStats(20, 9)).save.owned).not.toContain('acc-crown')
+  test('korunky za 100, 200 a 300 správně', () => {
+    const crowns = ['acc-crown-bronze', 'acc-crown-silver', 'acc-crown']
+    const owned = (total: number) => crowns.filter((id) => awardBadges(withStats(total)).save.owned.includes(id))
+    expect(owned(99)).toEqual([])
+    expect(owned(100)).toEqual(['acc-crown-bronze'])
+    expect(owned(200)).toEqual(['acc-crown-bronze', 'acc-crown-silver'])
+    expect(owned(300)).toEqual(crowns)
+    expect(awardBadges(withStats(100)).newBadges.map((b) => b.id)).toContain('diligent-pupil')
+    expect(awardBadges(withStats(200)).newBadges.map((b) => b.id)).toContain('clever-counter')
+    expect(awardBadges(withStats(300)).newBadges.map((b) => b.id)).toContain('counting-queen')
   })
 
   test('odznak se nepřidá dvakrát a bez novinek vrátí stejný stav', () => {
@@ -44,7 +52,7 @@ describe('odznaky', () => {
   })
 
   test('chybějící korunku k už získanému odznaku doplní (např. po importu)', () => {
-    const save = { ...createDefaultSave(), badges: ['times-table-star' as const] }
+    const save = { ...createDefaultSave(), badges: ['counting-queen' as const] }
     const result = awardBadges(save)
     expect(result.newBadges).toEqual([])
     expect(result.save.owned).toContain('acc-crown')

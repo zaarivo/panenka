@@ -1,6 +1,9 @@
 import { ITEMS } from '../data/items'
 import type { BadgeId, Item, SaveData } from '../types'
 
+/** Cíl odznaku „Královna počítání“, který odemyká Zlatou korunku. */
+export const ROYAL_TARGET = 300
+
 export interface Badge {
   id: BadgeId
   name: string
@@ -29,6 +32,20 @@ export const BADGES: readonly Badge[] = [
     name: 'Pilná školačka',
     description: 'Vyřeš správně 100 příkladů.',
     target: 100,
+    progress: (save) => save.stats.totalCorrect,
+  },
+  {
+    id: 'clever-counter',
+    name: 'Šikovná počtářka',
+    description: 'Vyřeš správně 200 příkladů.',
+    target: 200,
+    progress: (save) => save.stats.totalCorrect,
+  },
+  {
+    id: 'counting-queen',
+    name: 'Královna počítání',
+    description: 'Vyřeš správně 300 příkladů.',
+    target: ROYAL_TARGET,
     progress: (save) => save.stats.totalCorrect,
   },
 ]
