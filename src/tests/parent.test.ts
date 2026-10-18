@@ -137,6 +137,12 @@ describe('export a import', () => {
     expect(imported.owned).not.toContain('acc-crown')
   })
 
+  test('import doplní medaile podle počtů', () => {
+    const base = createDefaultSave()
+    const text = exportProgress({ ...base, medals: [], stats: { ...base.stats, correctByTopic: { ...base.stats.correctByTopic, add20: 50 } } })
+    expect(importProgress(base, text)!.medals).toEqual(['add20:bronze'])
+  })
+
   test('záloha ve verzi 1 se nahraje a převede', () => {
     const v1 = {
       saveVersion: 1,

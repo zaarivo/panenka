@@ -1,18 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { addGold, applyCorrectAnswer, applySkippedProblem, applyWrongAnswer } from '../lib/academy'
-import { awardBadges } from '../lib/badges'
-import { newCelebrations, type Celebration, type Known } from '../lib/celebrations'
+import { awardAchievements as award, newCelebrations, type Celebration, type Known } from '../lib/celebrations'
 import { buyItem, rewardForCorrect, type BuyResult } from '../lib/economy'
 import type { Problem } from '../lib/mathGenerator'
 import { acceptRecommendation, hashPin, resetProgress, snoozeRecommendation, updateTopics } from '../lib/parent'
 import type { Recommendation } from '../lib/practice'
-import { awardMedals } from '../lib/medals'
 import { loadSave, writeSave } from '../lib/storage'
 import { toggleEquip } from '../lib/wardrobe'
 import type { SaveData, Tier, TopicSettings } from '../types'
-
-/** Doplní medaile a odznaky (a odměny za ně) podle statistik. */
-const award = (save: SaveData) => awardBadges(awardMedals(save).save).save
 
 export function useGameState() {
   const [save, setSave] = useState<SaveData>(() => award(loadSave()))

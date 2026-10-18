@@ -1,6 +1,9 @@
 import type { BadgeId, MedalId, SaveData } from '../types'
-import { BADGES, type Badge } from './badges'
-import { MEDALS, type Medal } from './medals'
+import { BADGES, awardBadges, type Badge } from './badges'
+import { MEDALS, awardMedals, type Medal } from './medals'
+
+/** Doplní medaile a odznaky (a odměny za ně) podle statistik — při odpovědi, načtení i importu. */
+export const awardAchievements = (save: SaveData): SaveData => awardBadges(awardMedals(save).save).save
 
 export type Celebration = { kind: 'medal'; medal: Medal } | { kind: 'badge'; badge: Badge }
 
